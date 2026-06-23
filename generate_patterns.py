@@ -156,7 +156,30 @@ PATTERNS += [
     (r'小' + SEP + _NAI + SEP + _LONG, "# 小奶龙"),
 ]
 
-# ---- 13. 跨语言混搭 (any_milk × any_dragon, 850组合→1条正则) ----
+# ---- 13. 重组攻击 — 龙字拆解 / 缩写 / 形近字 / 连接符 ----
+_NAI_LOOKALIKE = r'[奶扔]'  # 扔 ≈ 奶 (形近)
+_LONG_LOOKALIKE = r'[龙龍竜垄龚庞]'  # 垄龚庞 含龙部首
+_LONG_DECOM = r'(?:[立亠].{0,2}[月⺼].{0,2}[乚⺄]?|[立亠].{0,2}[乚⺄])'  # 龙拆为 立+月+乚
+
+PATTERNS += [
+    # 龙拆字: 奶+立+月 / 奶+立+月+乚
+    (_NAI + _SP + r'[立亠]' + _SP + r'[月⺼]' + _SP + r'[乚⺄]?', "# 奶立月 (龙拆字)"),
+    (_NAI + _SP + r'[立亠]' + _SP + r'[乚⺄]', "# 奶立乚 (龙拆字2)"),
+    # NL 缩写 (NaiLong) — 使用单词边界避免误伤
+    (r'(?<!\w)[nN' + _N[1:-1] + r']' + _SP + r'[lL' + _L[1:-1] + r'](?!\w)', "# NL 缩写 (NaiLong)"),
+    # MD 缩写 (Milk Dragon)
+    (r'(?<!\w)[mM' + _M[1:-1] + r']' + _SP + r'[dD' + _D[1:-1] + r'](?!\w)', "# MD 缩写 (Milk Dragon)"),
+    # n*l / n×l (星号/乘号连接)
+    (r'[nN' + _N[1:-1] + r']+' + _SP + r'[\*×xX]' + _SP + r'[lL' + _L[1:-1] + r']+', "# n*l / n×l 星号连接"),
+    # 连接符: milk→dragon / 奶≈龙
+    (_M + '+' + _SP + _I + '+' + _SP + _L + '+' + _SP + _K + '+' + _SP + r'[→≈]' + _SP + _D + '+' + _SP + _R + '+' + _SP + _A + '+' + _SP + _G + '+' + _SP + _O + '+' + _SP + _N + '+', "# milk→dragon"),
+    (_M + '+' + _SP + _I + '+' + _SP + _L + '+' + _SP + _K + '+' + _SP + r'[→≈]' + _SP + _LONG, "# milk→龙"),
+    (_NAI + _SP + r'[→≈]' + _SP + _LONG, "# 奶→龙"),
+    # 形近字
+    (_NAI_LOOKALIKE + _SP + _LONG_LOOKALIKE, "# 扔龙 / 奶垄 (形近字混搭)"),
+]
+
+# ---- 14. 跨语言混搭 (any_milk × any_dragon) ----
 from cross_lang_attack import CROSS_LANG_PATTERN
 PATTERNS.append((CROSS_LANG_PATTERN, "# [跨语言] 任意语言的 '奶/milk' + 任意语言的 '龙/dragon' (850种组合)"))
 
@@ -182,7 +205,13 @@ print(f'Done: {len(PATTERNS)} patterns written to patterns_final.txt')
 # =============================================
 def quick_prep(s):
     s = unicodedata.normalize('NFKC', s)
+    # 去零宽字符
     s = re.sub(r'[​-‏⁠-⁯﻿­]', '', s)
+    # 去 RTL/LTR 覆盖符
+    s = re.sub(r'[‪-‮]', '', s)
+    # 去 Combining Diacritical Marks for Symbols (U+20D0-U+20FF)
+    # 含 ⃝ ⃠ ⃤ 等用于混淆的组合圆圈/三角/方块
+    s = re.sub(r'[⃐-⃿]', '', s)
     return s
 
 tests = [
