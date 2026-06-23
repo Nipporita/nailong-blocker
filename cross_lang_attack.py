@@ -10,7 +10,7 @@
 import re, unicodedata
 
 # 导入完整字符类（含负圈/方框/IPA/多文种/emoji）
-from nailong_patterns import _N, _A, _I, _L, _O, _G, _M, _K, _D, _R, _SP
+from nailong_patterns import _N, _A, _I, _L, _O, _G, _M, _K, _D, _R, _U, _SP
 
 # ============ 奶/milk 词表 ============
 # 拉丁字母使用完整 homoglyph 类 (_M/_I/_L/_K 等)，非拉丁使用字面量
@@ -55,6 +55,8 @@ MILK_WORDS = [
     r'우유', r'밀크',
     # 日语
     r'ミルク', r'牛乳',
+    # romaji miruku (日文罗马字)
+    _M + '+' + _SP + _I + '+' + _SP + _R + '+' + _SP + _U + '+' + _SP + _K + '+' + _SP + _U + '+',
     # 非拉丁文字
     r'นม',           # 泰语
     r'حليب',         # 阿拉伯语
@@ -103,6 +105,8 @@ DRAGON_WORDS = [
     r'용', r'드래곤',
     # 日语
     r'ドラゴン', r'[竜龍龙]',
+    # romaji doragon (日文罗马字 d-o-r-a-g-o-n)
+    _D + '+' + _SP + _O + '+' + _SP + _R + '+' + _SP + _A + '+' + _SP + _G + '+' + _SP + _O + '+' + _SP + _N + '+',
     # 非拉丁文字
     r'มังกร',        # 泰语
     r'تنين',         # 阿拉伯语
