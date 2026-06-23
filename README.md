@@ -46,7 +46,7 @@ if match_any("几∆丨Ӏ🔴п❙"):  # 视觉 = nailong
 | 同音/同义 | 奈龙、氖龙、乳汁龙、乳液龙、奶牛龙、酪龙 |
 | 拼音全变形 | nailong、n@1l0n9、n-a-i-l-o-n-g、naaaaailoooong |
 | 声调数字 | nai3long2、n4i3l0ng2 |
-| Unicode 伪装 | 𝐧𝐚𝐢𝐥𝐨𝐧𝐠、🅝🅐🅘🅛🅞🅝🅖、ñäîłøñğ、几∆丨🔴п❙ |
+| 26字母全Unicode替身 | 𝐧𝐚𝐢𝐥𝐨𝐧𝐠、🅝🅐🅘🅛🅞🅝🅖、ñäîłøñğ、几∆丨🔴п❙ |
 | Emoji | 🥛🐉、🐄🐲、👵🐉、🍼dragon |
 | 英文意译 | milk dragon、m!lk dr4g0n、milky dragon、dairy dragon |
 | 词序颠倒 | dragon milk、dragonmilk |
@@ -54,11 +54,18 @@ if match_any("几∆丨Ӏ🔴п❙"):  # 视觉 = nailong
 | 语义重排 | 龙喝奶、龙吃奶 |
 | 注音 | ㄋㄞˇㄌㄨㄥˊ、ㄋㄞ3ㄌㄨㄥ2 |
 | IPA 音标 | /naɪlɔːŋ/、[naɪ˨˩ lʊŋ˧˥] |
-| 日语音读/Romaji | にゅうりゅう、miruku doragon、milk りゅう |
+| 日语音读/Romaji | にゅうりゅう、miruku doragon、🅼🅸🅡🅤🅚🅤 🅓🅞🅡🅐🅖🅞🅝 |
 | 日/韩 | ミルクドラゴン、우유 용、나이롱、밀크 드래곤 |
-| 中文音译 | 米尔克多拉贡、米露可爪公、缪克德拉贡 |
-| 俚语 | breast dragon、boob 龙、drake milk、wyrm 龙、奶子龙 |
-| **跨语言混搭** | **milk 용、Milch 龙、lait ドラゴン、🥛ドラゴン、🅼🅸🅻🅺🐉** |
+| 日式当て字 | 魅留玖怒羅権、美留久土羅権 |
+| 拼音任意音节 | 弥二科爪公、密路堀多拉贡、度垃塨 (pypinyin自动, 3.94亿+5570万组合) |
+| 俚语(奶) | breast/boob/tit/udder/bosom/jug/chest + dragon |
+| 俚语(龙) | drake/wyrm/wyvern + milk |
+| 缩写/连接符 | NL、MD、n×l、milk→dragon、奶≈龙、milk×dragon |
+| 龙字拆解 | 奶立月、奶立月乚 |
+| RTL 反转 | ‮gnolian‬ (显示为 nailong) |
+| 组合/隐形符号 | n⃝a⃝i⃝l⃝o⃝n⃝g⃝ (变体选择器/标签字符/蒙古语分隔自动剥离) |
+| 昵称/修饰 | 奶龙酱、奶味龙、奶嘴龙、小奶龙 |
+| **跨语言混搭** | **45奶 × 39龙 = 1755组合 → 1条正则 (22KB)** |
 | 翻译全覆盖 | Milchdrache(德)、dragon de lait(法)、dragón de leche(西)、drago di latte(意)、dragão de leite(葡)、молочный дракон(俄)、молочний дракон(乌)、melk draak(荷)、mjölkdrake(瑞)、mælkedrage(丹)、mleczny smok(波)、süt ejderhası(土)、naga susu(印尼)、sữa rồng(越)、มังกรนม(泰)、تنين الحليب(阿)、דרקון חלב(希伯来)、दूध ड्रैगन(印地)、δράκος γάλακτος(希) |
 | 缩写/连接符 | NL、MD、n×l、milk→dragon、奶≈龙 |
 | 龙字拆解 | 奶立月、奶立月乚 |
