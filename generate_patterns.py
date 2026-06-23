@@ -205,12 +205,15 @@ print(f'Done: {len(PATTERNS)} patterns written to patterns_final.txt')
 # =============================================
 def quick_prep(s):
     s = unicodedata.normalize('NFKC', s)
-    # 去零宽字符
-    s = re.sub(r'[​-‏⁠-⁯﻿­]', '', s)
+    # 去零宽字符 + 软连字符 + 蒙古语元音分隔
+    s = re.sub(r'[​-‏⁠-⁯﻿­᠎]', '', s)
     # 去 RTL/LTR 覆盖符
     s = re.sub(r'[‪-‮]', '', s)
+    # 去 变体选择器 (U+FE00-U+FE0F)
+    s = re.sub(r'[︀-️]', '', s)
+    # 去 标签字符 (U+E0000-U+E007F) — astral plane, 用Python字符串过滤
+    s = ''.join(c for c in s if not (0xE0000 <= ord(c) <= 0xE007F))
     # 去 Combining Diacritical Marks for Symbols (U+20D0-U+20FF)
-    # 含 ⃝ ⃠ ⃤ 等用于混淆的组合圆圈/三角/方块
     s = re.sub(r'[⃐-⃿]', '', s)
     return s
 
