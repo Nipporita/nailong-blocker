@@ -1,0 +1,129 @@
+# 奶龙屏蔽器 — 外语翻译覆盖 (社交软件翻译功能)
+# 42 条额外语言 pattern
+
+# 日语 milk dragon
+ミルク\s*ドラゴン
+
+# 日语 dragon milk
+ドラゴン\s*ミルク
+
+# 日语 乳dragon
+乳\s*ドラゴン
+
+# 韩语 milk dragon
+우유\s*용
+
+# 韩语 dragon milk
+용\s*우유
+
+# 韩语音译 milk dragon
+밀크\s*드래곤
+
+# 韩语音译 dragon milk
+드래곤\s*밀크
+
+# 泰语 มังกรนม dragon milk
+[มังกร][นม]
+
+# 泰语 นมมังกร milk dragon
+[นม][มังกร]
+
+# 越南语 milk dragon
+sữa\s*rồng
+
+# 越南语 dragon milk
+rồng\s*sữa
+
+# 德语 Milchdrache
+[mMм][iIιі][lLł][cCс][hHһ]\s*[dD∂][rRяг][aAаα@4][cCс][hHһ][eEеë]
+
+# 法语 dragon de lait
+[dD∂][rRяг][aAаα@4][gG9][oOо0][nNη]\s*(?:de|au|du)\s*[lL][aAаα@4][iIιі1\|][tTт]
+
+# 法语 lait de dragon
+[lL][aAаα@4][iIιі1\|][tTт]\s*[dD][eEе]\s*[dD∂][rRяг][aAаα@4][gG9][oOо0][nNη]
+
+# 西语 dragón de leche
+[dD∂][rRяг][aAаα@4][gG9][oOо0óÓ][nNη]\s*(?:de|del)\s*[lL][eEеë][cCс][hHһ][eEеë]
+
+# 西语 leche de dragón
+[lL][eEеë][cCс][hHһ][eEеë]\s*(?:de|del)\s*[dD∂][rRяг][aAаα@4][gG9][oOо0óÓ][nNη]
+
+# 意语 drago di latte
+[dD∂][rRяг][aAаα@4][gG9][oOо0]\s*[dD][iIιі]\s*[lL][aAаα@4][tTт]+[eEеë]
+
+# 意语 latte di drago
+[lL][aAаα@4][tTт]+[eEеë]\s*[dD][iIιі]\s*[dD∂][rRяг][aAаα@4][gG9][oOо0]
+
+# 葡语 dragão de leite
+[dD∂][rRяг][aAаα@4][gG9][ãÃâÂaAаα@4][oOо0]\s*[dD][eEе]\s*[lL][eEе][iIιі][tTт][eEе]
+
+# 葡语 leite de dragão
+[lL][eEе][iIιі][tTт][eEе]\s*[dD][eEе]\s*[dD∂][rRяг][aAаα@4][gG9][ãÃâÂaAаα@4][oOо0]
+
+# 荷语 melk draak
+[mMм][eEеë][lLł][kKк]\s*[dD∂][rRяг][aAаα@4]+[kKк]
+
+# 瑞典语 mjölkdrake
+[mMм][jJ][öÖoOо0óÓòÒ][lLł][kKк]\s*[dD∂][rRяг][aAаα@4][kKк][eEеë]
+
+# 丹麦语 mælkedrage
+[mMм][æÆae]+[lLł][kKк][eEеë]\s*[dD∂][rRяг][aAаα@4][gG9][eEеë]
+
+# 波兰语 mleczny smok
+[mMм][lLł][eEеë][cCс][zZžŽ][nNη][yYуýÝ]\s*[sS][mMм][oOо0][kKк]
+
+# 波兰语 smok mleczny
+[sS][mMм][oOо0][kKк]\s*[mMм][lLł][eEеë][cCс][zZžŽ][nNη][yYуýÝ]
+
+# 土耳其语 süt ejderhası
+[sS][üÜuUùÙúÚ][tTт]\s*[eEеë][jJ][dD∂][eEеë][rRяг][hHһ][aAаα@4][sSşŞ][ıIιі]
+
+# 土耳其语 ejderha sütü
+[eEеë][jJ][dD∂][eEеë][rRяг][hHһ][aAаα@4][sSşŞ][ıIιі]\s*[sS][üÜuUùÙúÚ][tTт][üÜuUùÙúÚ]
+
+# 印尼/马来语 naga susu
+[nNη][aAаα@4][gG9][aAаα@4]\s*[sS][uUùÙúÚ][sS][uUùÙúÚ]
+
+# 印尼/马来语 susu naga
+[sS][uUùÙúÚ][sS][uUùÙúÚ]\s*[nNη][aAаα@4][gG9][aAаα@4]
+
+# 罗语 dragon de lapte
+[dD∂][rRяг][aAаα@4][gG9][oOо0][nNη]\s*[dD][eEе]\s*[lL][aAаα@4][pP][tTт][eEеë]
+
+# 芬兰语 maitolohikäärme
+[mMм][aAаα@4][iIιі][tTт][oOо0][lLł][oOо0][hHһ][iIιі][kKк][ääææÄÆ]+[rRяг][mMм][eEеë]
+
+# 挪威语 melkedrage
+[mMм][eEеë][lLł][kKк][eEеë]\s*[dD∂][rRяг][aAаα@4][gG9][eEеë]
+
+# 俄语 молочный дракон
+мол[оoOо0]*[чƜ][нnNη][ыyY][йiIιі]?\s*[дdD∂][рrRяг][аaAаα@4][кkK][оoOо0][нnNη]
+
+# 俄语 молоко дракон
+мол[оoOо0]+[кkK][оoOо0]\s*[дdD∂][рrRяг][аaAаα@4][кkK][оoOо0][нnNη]
+
+# 俄语 найлонг
+на[йiIιі][лlL][оoOо0][нnNη][гgG9]
+
+# 乌克兰语 молочний дракон
+мол[оoOо0]+[чƜ][нnNη][иiIιі][йiIιі]\s*[дdD∂][рrRяг][аaAаα@4][кkK][оoOо0][нnNη]
+
+# 希腊语 δράκος γάλακτος
+[δ∂дdD][ρррrR][άαаaA@4][κkK][οоoO0][ςsSσ]\s*[γgG9][άαаaA@4][λlL][αaAа@4][κkK][τтtT][οоoO0][ςsSσ]
+
+# 希腊语 γάλα δράκου
+[γgG9][άαаaA@4][λlL][αaAа@4]\s*[δ∂дdD][ρррrR][άαаaA@4][κkK][οоoO0][υuU][ςsSσ]?
+
+# 阿拉伯语 تنين الحليب
+[تت][نن][يي][نن]\s*[اا][ل][حح][ل][يي][بب]
+
+# 阿拉伯语 حليب التنين
+[حح][ل][يي][بب]\s*[تت][نن][يي][نن]
+
+# 印地语 दूध ड्रैगन
+[दड][ूू][धथ][ ]?[डड][्]*[रर][ैै][गग][नन]
+
+# 希伯来语 דרקון חלב
+[דד][רר][קkK][וoO0][ןnNη]\s*[חhH][לlL][בbB]
+
