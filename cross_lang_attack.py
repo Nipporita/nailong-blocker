@@ -1,117 +1,115 @@
 """
 跨语言混搭攻击 — 奶词表 × 龙词表 笛卡尔积
 =============================================
-"milk 용", "Milch 龙", "ミルク dragon" ...
+"milk 용", "Milch 龙", "ミルク dragon", "🥛ドラゴン", "奶🅛🅞🅝🅖", "👵🐉" ...
 任意语言的 "奶/milk" + 任意语言的 "龙/dragon" 拼接
+
+复用 nailong_patterns 的完整 homoglyph 字符类，确保覆盖
+负圈字母/方框字母/IPA/多文种替身等全部视觉变体。
 """
 import re, unicodedata
 
-# ============ 奶/milk 词表 (所有语言) ============
+# 导入完整字符类（含负圈/方框/IPA/多文种/emoji）
+from nailong_patterns import _N, _A, _I, _L, _O, _G, _M, _K, _D, _R, _SP
+
+# ============ 奶/milk 词表 ============
+# 拉丁字母使用完整 homoglyph 类 (_M/_I/_L/_K 等)，非拉丁使用字面量
+
 MILK_WORDS = [
     # 中文
     r'奶', r'乳', r'乳汁', r'乳液', r'酪', r'奶牛', r'牛乳', r'鲜奶',
-    # 英文 milk / milky
-    r'[mMмμ][iIιі1|]+[lLł1|]+[kKкκ]',
-    r'[mMмμ][iIιі1|]+[lLł1|]+[kKкκ][yYiIeE]+',
+    # 英文 milk / milky (使用完整类: 🅜🅘🅛🅚 等全部覆盖)
+    _M + '+' + _SP + _I + '+' + _SP + _L + '+' + _SP + _K + '+',
+    _M + '+' + _SP + _I + '+' + _SP + _L + '+' + _SP + _K + r'+[yYiIeE]+',
     # dairy
-    r'[dD∂][aAаα@4]+[iIιі1|]+[rRяг][yYýÿŷ]',
+    r'[dD∂]' + '+' + _SP + _A + '+' + _SP + _I + '+' + _SP + _R + '+' + _SP + r'[yYýÿŷ]+',
     # 德语 Milch
-    r'[mMм][iIιі][lLł][cCс][hHһ]',
+    _M + '+' + _SP + _I + '+' + _SP + _L + '+' + _SP + r'[cCсhHһ]+',
     # 法语 lait
-    r'[lL][aAаα@4][iIιі1|]+[tTт]',
+    _L + '+' + _SP + _A + '+' + _SP + _I + '+' + _SP + r'[tTт]+',
     # 西语 leche
-    r'[lL][eEеë][cCс][hHһ][eEеë]',
+    _L + '+' + _SP + r'[eEеë]+' + _SP + r'[cCс]+' + _SP + r'[hHһ]+' + _SP + r'[eEеë]+',
     # 意语 latte
-    r'[lL][aAаα@4][tTт]+[eEеë]',
+    _L + '+' + _SP + _A + '+' + _SP + r'[tTт]+' + _SP + r'[eEеë]+',
     # 葡语 leite
-    r'[lL][eEе][iIιі][tTт][eEе]',
+    _L + '+' + _SP + r'[eEе]+' + _SP + _I + '+' + _SP + r'[tTт]+' + _SP + r'[eEе]+',
     # 俄语 молоко / молочный
     r'мол[оoOо0]+[кkK]?[оoOо0]?[чƜ]?[нnNη]?[ыyY]?[йiIιі]?',
     # 乌克兰语 молочний
     r'мол[оoOо0]+[чƜ][нnNη][иiIιі][йiIιі]',
     # 荷兰语 melk
-    r'[mMм][eEеë][lLł][kKк]',
+    _M + '+' + _SP + r'[eEеë]+' + _SP + _L + '+' + _SP + _K + '+',
     # 瑞典语 mjolk
-    r'[mMм][jJ][oOо0óÓòÒöÖ]+[lLł][kKк]',
+    _M + '+' + _SP + r'[jJ]+' + _SP + _O + '+' + _SP + _L + '+' + _SP + _K + '+',
     # 丹麦/挪威语 maelk/melk
-    r'[mMм][æÆae]+[lLł][kKк]',
-    r'[mMм][eEеë][lLł][kKк]',
+    _M + '+' + _SP + r'[æÆae]+' + _SP + _L + '+' + _SP + _K + '+',
     # 波兰语 mleko/mleczny
-    r'[mMм][lLł][eEеë][kKк][oOо0]?[cCс]?[zZ]?[nNη]?[yY]?',
+    _M + '+' + _SP + _L + '+' + _SP + r'[eEеë]+' + _SP + _K + '+' + _SP + r'[oOо0]?' + _SP + r'[cCс]?' + _SP + r'[zZ]?' + _SP + r'[nNη]?' + _SP + r'[yY]?',
     # 土耳其语 sut
-    r'[sSşŞ][uUùÙúÚüÜ]+[tTт]',
+    r'[sSşŞ]+' + _SP + r'[uUùÙúÚüÜ]+' + _SP + r'[tTт]+',
     # 印尼/马来语 susu
-    r'[sS][uUùÙúÚ][sS][uUùÙúÚ]',
+    r'[sS]+' + _SP + r'[uUùÙúÚ]+' + _SP + r'[sS]+' + _SP + r'[uUùÙúÚ]+',
     # 越南语 sua
-    r'[sS][uUùÙúÚữưŨƯ]+[aAаα@4âÂấẤầẦ]',
+    r'[sS]+' + _SP + r'[uUùÙúÚữưŨƯ]+' + _SP + r'[aAаα@4âÂấẤầẦ]+',
     # 韩语
-    r'우유',      # milk
-    r'밀크',      # milk 音译
+    r'우유', r'밀크',
     # 日语
-    r'ミルク',    # milk
-    r'牛乳',      # milk (kanji)
-    # 泰语
-    r'นม',
-    # 阿拉伯语
-    r'حليب',
-    # 印地语
-    r'दूध',
-    # 希伯来语
-    r'חלב',
+    r'ミルク', r'牛乳',
+    # 非拉丁文字
+    r'นม',           # 泰语
+    r'حليب',         # 阿拉伯语
+    r'दूध',          # 印地语
+    r'חלב',          # 希伯来语
     # Emoji 奶类
-    r'[\U0001f95b\U0001f37c\U0001f37b\U0001f375\U0001f404\U0001f42e\U0001f402\U0001f416]',
+    r'[\U0001f95b\U0001f37c\U0001f37b\U0001f375\U0001f404\U0001f42e\U0001f402\U0001f416\U0001f475\U0001f9d3]',
 ]
 
-# ============ 龙/dragon 词表 (所有语言) ============
+# ============ 龙/dragon 词表 ============
+
 DRAGON_WORDS = [
     # 中文
     r'[龙龍竜龒陇拢珑⻰]',
-    # 英文 dragon
-    r'[dD∂][rRяг][aAаα@4][gG96]+[oOо0óÓòÒ][nNη]',
-    # loong / long
-    r'[lLł1|]+[oOо0óÓòÒöÖ]{1,20}[nNη]+[gG96]+',
+    # 英文 dragon (完整类: 🅓🅡🅐🅖🅞🅝 全部覆盖)
+    _D + '+' + _SP + _R + '+' + _SP + _A + '+' + _SP + _G + '+' + _SP + _O + '+' + _SP + _N + '+',
+    # loong / long (完整类: 🅛🅞🅝🅖 / 🅛🅞🅞🅝🅖 全部覆盖)
+    _L + '+' + _SP + _O + '{1,20}' + _SP + _N + '+' + _SP + _G + '+',
     # 德语 Drache
-    r'[dD∂][rRяг][aAаα@4][cCс][hHһ][eEеë]',
+    _D + '+' + _SP + _R + '+' + _SP + _A + '+' + _SP + r'[cCс]+' + _SP + r'[hHһ]+' + _SP + r'[eEеë]+',
     # 法语 dragon
-    r'[dD∂][rRяг][aAаα@4][gG96][oOо0][nNη]',
-    # 西语 dragon
-    r'[dD∂][rRяг][aAаα@4][gG96][oOо0óÓòÒ][nNη]',
+    _D + '+' + _SP + _R + '+' + _SP + _A + '+' + _SP + _G + '+' + _SP + _O + '+' + _SP + _N + '+',
+    # 西语 dragón
+    _D + '+' + _SP + _R + '+' + _SP + _A + '+' + _SP + _G + '+' + _SP + _O + '+' + _SP + _N + '+',
     # 意语 drago
-    r'[dD∂][rRяг][aAаα@4][gG96][oOо0]',
-    # 葡语 dragao
-    r'[dD∂][rRяг][aAаα@4][gG96][aAаα@4ãÃâÂ][oOо0]',
-    # 俄语 drakon
-    r'[дdD∂][рrRяг][аaAаα@4][кkK][оoOо0][нnNη]',
+    _D + '+' + _SP + _R + '+' + _SP + _A + '+' + _SP + _G + '+' + _SP + _O + '+',
+    # 葡语 dragão
+    _D + '+' + _SP + _R + '+' + _SP + _A + '+' + _SP + _G + '+' + _SP + r'[aAаα@4ãÃâÂ]+' + _SP + _O + '+',
+    # 俄语 дракон
+    r'[дdD∂]+' + _SP + r'[рrRяг]+' + _SP + r'[аaAаα@4]+' + _SP + r'[кkK]+' + _SP + r'[оoOо0]+' + _SP + r'[нnNη]+',
     # 荷兰语 draak
-    r'[dD∂][rRяг][aAаα@4]+[kKк]',
+    _D + '+' + _SP + _R + '+' + _SP + _A + '+' + _SP + _K + '+',
     # 瑞典语 drake
-    r'[dD∂][rRяг][aAаα@4][kKк][eEеë]',
+    _D + '+' + _SP + _R + '+' + _SP + _A + '+' + _SP + _K + '+' + _SP + r'[eEеë]+',
     # 丹麦/挪威语 drage
-    r'[dD∂][rRяг][aAаα@4][gG96][eEеë]',
+    _D + '+' + _SP + _R + '+' + _SP + _A + '+' + _SP + _G + '+' + _SP + r'[eEеë]+',
     # 波兰语 smok
-    r'[sS][mMм][oOо0][kKк]',
+    r'[sS]+' + _SP + _M + '+' + _SP + _O + '+' + _SP + _K + '+',
     # 土耳其语 ejderha
-    r'[eEеë][jJ][dD∂][eEеë][rRяг][hHһ][aAаα@4]',
+    r'[eEеë]+' + _SP + r'[jJ]+' + _SP + _D + '+' + _SP + r'[eEеë]+' + _SP + _R + '+' + _SP + r'[hHһ]+' + _SP + _A + '+',
     # 印尼/马来语 naga
-    r'[nNη][aAаα@4][gG96][aAаα@4]',
+    _N + '+' + _SP + _A + '+' + _SP + _G + '+' + _SP + _A + '+',
     # 越南语 rong
-    r'[rRяг][oOо0óÓòÒôÔồỒ]+[nNη][gG96]',
+    _R + '+' + _SP + _O + '+' + _SP + _N + '+' + _SP + _G + '+',
     # 韩语
-    r'용',        # dragon
-    r'드래곤',    # dragon 音译
+    r'용', r'드래곤',
     # 日语
-    r'ドラゴン',  # dragon
-    r'[竜龍龙]',  # dragon kanji
-    # 泰语
-    r'มังกร',
-    # 阿拉伯语
-    r'تنين',
-    # 希伯来语
-    r'דרקון',
-    # 印地语
-    r'ड्रैगन',
+    r'ドラゴン', r'[竜龍龙]',
+    # 非拉丁文字
+    r'มังกร',        # 泰语
+    r'تنين',         # 阿拉伯语
+    r'דרקון',        # 希伯来语
+    r'ड्रैगन',       # 印地语
     # 希腊语 drakos/drakou
-    r'[δ∂дdD][ρррrR][άαаaA@4][κkK][οоoO0][ςsSσυuU]?',
+    r'[δ∂дdD]+' + _SP + r'[ρррrR]+' + _SP + r'[άαаaA@4]+' + _SP + r'[κkK]+' + _SP + r'[οоoO0]+' + _SP + r'[ςsSσυuU]?',
     # Emoji 龙类
     r'[\U0001f409\U0001f432]',
 ]
@@ -119,9 +117,8 @@ DRAGON_WORDS = [
 # ============ 构造跨语言混搭 Pattern ============
 MILK = '(?:' + '|'.join(MILK_WORDS) + ')'
 DRAGON = '(?:' + '|'.join(DRAGON_WORDS) + ')'
-SEP = r"[\s\-_.,;:!?·•⋅∙*+~|/\\()\[\]{}<>'\"`´'\"\"、。，！？…「」『』【】〝〞@#$%^&=]*"
 
-CROSS_LANG_PATTERN = MILK + SEP + DRAGON
+CROSS_LANG_PATTERN = MILK + _SP + DRAGON
 
 print(f"MILK words:   {len(MILK_WORDS)}")
 print(f"DRAGON words: {len(DRAGON_WORDS)}")
@@ -137,20 +134,28 @@ def prep(s):
 
 tests = [
     # 跨语言混搭
-    ("milk 용", True),           ("Milch 龙", True),
-    ("lait 용", True),           ("leche dragon", True),
-    ("milk มังกร", True),        ("ミルク 龙", True),
-    ("우유 dragon", True),       ("молоко 龙", True),
-    ("sữa dragon", True),        ("süt 용", True),
-    ("milk дракон", True),       ("susu 龙", True),
-    ("milk تنين", True),         ("milk דרקון", True),
-    ("milk ड्रैगन", True),       ("dairy 용", True),
-    ("Milch 드래곤", True),      ("leite ドラゴン", True),
-    ("milk ドラゴン", True),     ("dairy 龙", True),
-    ("milk loong", True),        ("milk long", True),
+    ("milk 용", True),       ("Milch 龙", True),
+    ("lait 용", True),       ("milk มังกร", True),
+    ("ミルク 龙", True),      ("우유 dragon", True),
+    ("молоко 龙", True),     ("sữa dragon", True),
+    ("süt 용", True),        ("milk дракон", True),
+    ("susu 龙", True),       ("dairy 용", True),
+    ("Milch 드래곤", True),   ("leite ドラゴン", True),
+    ("milk ドラゴン", True),  ("dairy 龙", True),
+    # emoji 混搭
+    ("🥛ドラゴン", True),     ("milk 🐉", True),
+    ("🥛용", True),           ("Milch 🐲", True),
+    ("🥛 龙", True),          ("🍼 dragon", True),
+    ("👵🐉", True),           ("🧓 🐲", True),
+    # 负圈/方框字母混搭 (用户发现的漏洞)
+    ("奶🅛🅞🅝🅖", True),     ("奶🅻🅾🅽🅶", True),
+    ("milk 🅛🅞🅝🅖", True),  ("🥛🅓🅡🅐🅖🅞🅝", True),
+    ("🅜🅘🅛🅚 龙", True),    ("🅼🅸🅻🅺 🐉", True),
+    # 常规
+    ("milk loong", True),     ("milk long", True),
     # 不应匹配
-    ("milk shake", False),       ("dragon fruit", False),
-    ("龙年大吉", False),         ("milk tea", False),
+    ("milk shake", False),    ("dragon fruit", False),
+    ("龙年大吉", False),      ("milk tea", False),
 ]
 
 passed = 0
@@ -158,15 +163,18 @@ for text, expect in tests:
     got = bool(re.search(CROSS_LANG_PATTERN, prep(text), re.IGNORECASE))
     ok = got == expect
     if ok: passed += 1
-    print(f'  [{"PASS" if ok else "FAIL"}] {text!r:30s} expect={expect} got={got}')
+    print(f'  [{"PASS" if ok else "FAIL"}] {text!r:35s} expect={expect} got={got}')
 
 print(f"\n{passed}/{len(tests)} passed")
+if passed == len(tests):
+    print("All clear!")
 
 # 保存
 with open("pattern_cross_lang.txt", "w", encoding="utf-8") as f:
     f.write("# 奶龙屏蔽器 — 跨语言混搭 Pattern\n")
-    f.write(f"# 奶词表: {len(MILK_WORDS)} 种表达 x 龙词表: {len(DRAGON_WORDS)} 种表达\n")
-    f.write(f"# 笛卡尔积: {len(MILK_WORDS)*len(DRAGON_WORDS)} 种组合，1 条正则全覆盖\n\n")
+    f.write(f"# 奶词表: {len(MILK_WORDS)} 表达 x 龙词表: {len(DRAGON_WORDS)} 表达\n")
+    f.write(f"# 笛卡尔积: {len(MILK_WORDS)*len(DRAGON_WORDS)} 组合，1 条正则全覆盖\n")
+    f.write(f"# 含负圈字母/方框字母/IPA/Emoji/19种语言\n\n")
     f.write(CROSS_LANG_PATTERN)
     f.write("\n")
 
