@@ -11,6 +11,7 @@ import re, unicodedata
 
 # 导入完整字符类（含负圈/方框/IPA/多文种/emoji）
 from nailong_patterns import _N, _A, _I, _L, _O, _G, _M, _K, _D, _R, _U, _SP
+from nailong_patterns import _B, _C, _E, _F, _H, _J, _P, _Q, _S, _T, _V, _W, _X, _Y, _Z
 
 # ============ 奶/milk 词表 ============
 # 拉丁字母使用完整 homoglyph 类 (_M/_I/_L/_K 等)，非拉丁使用字面量
@@ -59,14 +60,19 @@ MILK_WORDS = [
     _M + '+' + _SP + _I + '+' + _SP + _R + '+' + _SP + _U + '+' + _SP + _K + '+' + _SP + _U + '+',
     # にゅう / にゆう (hiragana: 乳=nyuu)
     r'に[ゅゆ]\s*う',
+    # 中文音译 — 米尔克/米露可/密乳克/缪克 = milk
+    r'米\s*[尔爾]\s*克',
+    r'米\s*露\s*可',
+    r'密\s*乳\s*克',
+    r'缪\s*克',
     # 俚语 — breast/boob/tit/udder/bosom/jug = 奶
-    r'[bBв][rRяг][eEеë][aAаα@4][sS][tTт]',           # breast
-    r'[bBв][oOо0óÓòÒ]{2,}[bBв]',                       # boob/boobs
-    r'[tTт][iIιі1|]+[tTт]+[yYуýÿ]?',                   # tit/titty
-    r'[uUùÙúÚ][dD∂][dD∂][eEеë][rRяг]',                # udder
-    r'[bBв][oOо0óÓòÒ][sS][oOо0óÓòÒ][mMм]',            # bosom
-    r'[jJ][uUùÙúÚ][gG96]',                               # jug
-    r'[cCс][hHһ][eEеë][sS][tTт]',                       # chest
+    _B + '+' + _SP + _R + '+' + _SP + _E + '+' + _SP + _A + '+' + _SP + _S + '+' + _SP + _T + '+', # breast
+    _B + '+' + _SP + _O + '{2,}' + _SP + _B + '+',                             # boob
+    _T + '+' + _SP + _I + '+' + _SP + _T + '+' + _SP + _Y + '?',                   # tit/titty
+    _U + '+' + _SP + _D + '+' + _SP + _D + '+' + _SP + _E + '+' + _SP + _R + '+',                # udder
+    _B + '+' + _SP + _O + '+' + _SP + _S + '+' + _SP + _O + '+' + _SP + _M + '+',            # bosom
+    _J + '+' + _SP + _U + '+' + _SP + _G + '+',                               # jug
+    _C + '+' + _SP + _H + '+' + _SP + _E + '+' + _SP + _S + '+' + _SP + _T + '+',                       # chest
     # 非拉丁文字
     r'นม',           # 泰语
     r'حليب',         # 阿拉伯语
@@ -119,10 +125,15 @@ DRAGON_WORDS = [
     _D + '+' + _SP + _O + '+' + _SP + _R + '+' + _SP + _A + '+' + _SP + _G + '+' + _SP + _O + '+' + _SP + _N + '+',
     # りゅう / りゆう (hiragana: 龍=ryuu)
     r'り[ゅゆ]\s*う',
+    # 中文音译 — 多拉贡/德拉贡/爪公/巨拉贡/拽根 = dragon
+    r'[多德拉]\s*[拉啦]\s*[贡工公]',
+    r'爪\s*公',
+    r'巨\s*[拉啦]\s*[贡工公]',
+    r'拽\s*根',
     # 俚语 — drake/wyrm/wyvern = 龙
-    r'[dD∂][rRяг][aAаα@4][kKк][eEеë]',                # drake
-    r'[wW][yYуýÿ][rRяг][mMм]',                          # wyrm
-    r'[wW][yYуýÿ][vV][eEеë][rRяг][nNη]',                # wyvern
+    _D + '+' + _SP + _R + '+' + _SP + _A + '+' + _SP + _K + '+' + _SP + _E + '+',                # drake
+    _W + '+' + _SP + _Y + '+' + _SP + _R + '+' + _SP + _M + '+',                          # wyrm
+    _W + '+' + _SP + _Y + '+' + _SP + _V + '+' + _SP + _E + '+' + _SP + _R + '+' + _SP + _N + '+',                # wyvern
     # 非拉丁文字
     r'มังกร',        # 泰语
     r'تنين',         # 阿拉伯语

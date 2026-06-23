@@ -141,6 +141,28 @@ _K = (
     r"]"
 )
 
+# W 类 (wyrm 等)
+_W = (
+    r"[wｗ"
+    r"ẃẁŵẅẉẘ"                # 拉丁扩展
+    r"ɯʷ"                     # IPA
+    r"ω"                      # 希腊 omega (视觉≈w)
+    r"шщ"                     # 西里尔 sha/shcha
+    r"🅦🅆🄦"                  # 负圈/负方/方框 W
+    r"]"
+)
+
+# Y 类 (wyrm/dairy 等)
+_Y = (
+    r"[yｙ"
+    r"ýỳŷȳẏẙỳỵỷỹ"           # 拉丁扩展
+    r"ʏ"                      # IPA small cap Y
+    r"γ"                      # 希腊 gamma (视觉≈y)
+    r"уў"                     # 西里尔 u/short u
+    r"🅨🅈🄨"                  # 负圈/负方/方框 Y
+    r"]"
+)
+
 # U 类 (romaji "miruku", 越南语 ữ 等)
 _U = (
     r"[uｕ"
@@ -154,6 +176,22 @@ _U = (
     r"🅤🆄🄴"                  # 负圈/负方/方框 U
     r"]"
 )
+
+# ---- 完整 26 字母补充 (已有 N/A/I/L/O/G/M/K/D/R/U/W/Y，补其余) ----
+
+_B = r"[bｂḃḅḇƀƃɓβв🅑🅱🄱]"
+_C = r"[cｃćĉċčçċȼƈɔс🅒🅲🄲]"
+_E = r"[eｅèéêëēĕėęěȅȇȩẹẻẽếềểễệɛɜəεе🅔🅴🄴]"
+_F = r"[fｆḟƒʄ🅕🅵🄵]"
+_H = r"[hｈĥȟḣḧḩḫẖɦɧħнһ🅗🅷🄷]"
+_J = r"[jｊĵɉʝј🅙🅹🄹]"
+_P = r"[pｐṕṗƥƿρр🅟🅿🄿]"
+_Q = r"[qｑɋ🅠🆀🄀]"
+_S = r"[sｓśŝşšṡșṣṩẛʂѕ🅢🆂🄂]"
+_T = r"[tｔťțţṫṫṱẗƭțʈт🅣🆃🄃]"
+_V = r"[vｖṽṿʋν🅥🆅🄅]"
+_X = r"[xｘẋẍ×х🅧🅇🄧]"
+_Z = r"[zｚźżžƍƶɀʐ🅩🅉🄩]"
 
 # ---- 组成 "dragon" 的字母 ----
 
@@ -235,9 +273,9 @@ PATTERNS += [
     # milky long / milkie long
     rf"{_M}+{_SP}{_I}+{_SP}{_L}+{_SP}{_K}[yYiIeE]+{_SP}{_L}+{_SP}{_O}{{1,20}}{_SP}{_N}+{_SP}{_G}+",
     # dairy dragon  (d+a+i+r+y + dragon)
-    rf"[dD∂][aA@4αа∂áàäâãåāăąǎȧạảấɑ][iI1!\|ïîĩīĭįıɨɩɪιі][rRяг][yYýÿŷȳẏẙỳỵỷỹуў]\s*{_D}+{_SP}{_R}+{_SP}{_A}+{_SP}{_G}+{_SP}{_O}+{_SP}{_N}+",
+    rf"{_D}+{_SP}{_A}+{_SP}{_I}+{_SP}{_R}+{_SP}{_Y}+{_SP}{_D}+{_SP}{_R}+{_SP}{_A}+{_SP}{_G}+{_SP}{_O}+{_SP}{_N}+",
     # dairy long
-    rf"[dD∂][aA@4αа∂áàäâãåāăąǎȧạảấɑ][iI1!\|ïîĩīĭįıɨɩɪιі][rRяг][yYýÿŷȳẏẙỳỵỷỹуў]\s*{_L}+{_SP}{_O}{{1,20}}{_SP}{_N}+{_SP}{_G}+",
+    rf"{_D}+{_SP}{_A}+{_SP}{_I}+{_SP}{_R}+{_SP}{_Y}+{_SP}{_L}+{_SP}{_O}{{1,20}}{_SP}{_N}+{_SP}{_G}+",
     # 词序颠倒: dragon milk / dragonmilk
     rf"{_D}+{_SP}{_R}+{_SP}{_A}+{_SP}{_G}+{_SP}{_O}+{_SP}{_N}+{_SP}{_M}+{_SP}{_I}+{_SP}{_L}+{_SP}{_K}+",
     # 词序颠倒: dragon long (龙 + long 语义)
@@ -369,18 +407,18 @@ PATTERNS += [
     # Hangul Jamo 拆分 (ㅇㅜㅇㅠ = 우유 = milk)
     r"ㅇ\s*ㅜ\s*ㅇ\s*ㅠ",
     # milk x dragon / milk × dragon (x/× 连接)
-    rf"{_M}+{_SP}{_I}+{_SP}{_L}+{_SP}{_K}+{_SP}[xX×]{_SP}{_D}+{_SP}{_R}+{_SP}{_A}+{_SP}{_G}+{_SP}{_O}+{_SP}{_N}+",
+    rf"{_M}+{_SP}{_I}+{_SP}{_L}+{_SP}{_K}+{_SP}{_X}{_SP}{_D}+{_SP}{_R}+{_SP}{_A}+{_SP}{_G}+{_SP}{_O}+{_SP}{_N}+",
     # milk x long
-    rf"{_M}+{_SP}{_I}+{_SP}{_L}+{_SP}{_K}+{_SP}[xX×]{_SP}{_L}+{_SP}{_O}{{1,20}}{_SP}{_N}+{_SP}{_G}+",
+    rf"{_M}+{_SP}{_I}+{_SP}{_L}+{_SP}{_K}+{_SP}{_X}{_SP}{_L}+{_SP}{_O}{{1,20}}{_SP}{_N}+{_SP}{_G}+",
     # 奶 x 龙
-    rf"{_NAI}{_SP}[xX×]{_SP}{_LONG}",
+    rf"{_NAI}{_SP}{_X}{_SP}{_LONG}",
     # 龙俚语倒序: drake milk / wyrm milk / wyvern milk
-    rf"[dD∂][rRяг][aAаα@4][kKк][eEеë]{_SP}{_M}+{_SP}{_I}+{_SP}{_L}+{_SP}{_K}+",
-    rf"[wW][yYуýÿ][rRяг][mMм]{_SP}{_M}+{_SP}{_I}+{_SP}{_L}+{_SP}{_K}+",
-    rf"[wW][yYуýÿ][vV][eEеë][rRяг][nNη]{_SP}{_M}+{_SP}{_I}+{_SP}{_L}+{_SP}{_K}+",
+    rf"{_D}+{_SP}{_R}+{_SP}{_A}+{_SP}{_K}+{_SP}{_E}+{_SP}{_M}+{_SP}{_I}+{_SP}{_L}+{_SP}{_K}+",
+    rf"{_W}+{_SP}{_Y}+{_SP}{_R}+{_SP}{_M}+{_SP}{_M}+{_SP}{_I}+{_SP}{_L}+{_SP}{_K}+",
+    rf"{_W}+{_SP}{_Y}+{_SP}{_V}+{_SP}{_E}+{_SP}{_R}+{_SP}{_N}+{_SP}{_M}+{_SP}{_I}+{_SP}{_L}+{_SP}{_K}+",
     # 龙俚语 + 龙: drake long / wyrm 龙 等 (跨语言)
-    rf"[dD∂][rRяг][aAаα@4][kKк][eEеë]{_SP}{_LONG}",
-    rf"[wW][yYуýÿ][rRяг][mMм]{_SP}{_LONG}",
+    rf"{_D}+{_SP}{_R}+{_SP}{_A}+{_SP}{_K}+{_SP}{_E}+{_SP}{_LONG}",
+    rf"{_W}+{_SP}{_Y}+{_SP}{_R}+{_SP}{_M}+{_SP}{_LONG}",
 ]
 
 
