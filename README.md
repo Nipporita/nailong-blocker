@@ -63,10 +63,26 @@ if match_any("几∆丨Ӏ🔴п❙"):  # 视觉 = nailong
 ## 跨语言混搭
 
 ```
-37 种奶表达 × 29 种龙表达 = 1073 种组合 → 1 条正则
+36 种奶表达 × 28 种龙表达 = 1008 种组合 → 1 条正则
 ```
 
 包括 emoji、负圈字母、方框字母、中文、拼音、火星文、日语音读、19 种外语之间的任意排列组合。
+
+## 预处理
+
+防线依赖输入预处理来击溃隐形混淆层：
+
+```python
+def prep(text):
+    text = unicodedata.normalize('NFKC', text)       # 全角/数学字母→普通字母
+    text = re.sub(r'[​-‏⁠-⁯﻿­᠎]', '', text)  # 零宽/软连字符/蒙古语元音分隔
+    text = re.sub(r'[‪-‮]', '', text)               # RTL/LTR 覆盖
+    if was_rtl: text = text[::-1]                     # RTL→反转文本
+    text = re.sub(r'[︀-️]', '', text)               # 变体选择器 VS1-16
+    text = ''.join(c for c in text if ord(c) < 0xE0000 or ord(c) > 0xE007F)  # 标签字符
+    text = re.sub(r'[⃐-⃿]', '', text)               # 组合圆圈/三角/方块
+    return text
+```
 
 ## 文件说明
 
@@ -78,13 +94,15 @@ if match_any("几∆丨Ӏ🔴п❙"):  # 视觉 = nailong
 | `generate_patterns.py` | Pattern 生成器 + 56 条测试用例 |
 | `attack_probe.py` | 攻击探针 — 140+ 种攻击向量 |
 | `recomb_attack.py` | 重组攻击探针 — 拆字/缩写/连接符/RTL |
+| `edge_probe.py` | 边缘攻击探针 — 隐形分隔/变体选择器/特殊标点 |
 | `char_mix_probe.py` | 字符混搭探针 |
 | `ultimate_homoglyph.py` | 终极 homoglyph 扫描器 |
 | `nailong_blocker.py` | 初版架构（保留供参考） |
 
 ## 版本
 
-- **v1.7** — 终极 Homoglyph 扩展 (+67字符：Coptic/制表符/CJK笔画/彩色圆/球类emoji/太阳)
+- **v1.8** — 边缘攻击防御 (变体选择器/标签字符/隐形分隔/SP标点扩展/x连接)
+- **v1.7** — 终极 Homoglyph 扩展 (+67字符：Coptic/制表符/CJK笔画/彩色圆/球类/太阳)
 - **v1.6** — 火星文防御 (仍孕隆窿宠笼聋 等含乃/龙部件异体同音字)
 - **v1.5** — 重组攻击防御 (龙拆字/NL缩写/连接符/形近字/RTL反转)
 - **v1.4** — 字符混搭强化 + Romaji (miruku/doragon)
