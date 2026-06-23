@@ -24,6 +24,10 @@
 
 **[`patterns_final.txt`](patterns_final.txt)** — 79 条纯正则，可直接复制到任何支持正则的系统中使用。
 
+### 标准替换库
+
+**[`homoglyph_lib.py`](homoglyph_lib.py)** — 完整 26 字母 + 扩展 homoglyph 标准替换库。每字母对应一个全 Unicode 视觉形似字符黑洞。
+
 ### Python 模块
 
 ```python
@@ -52,6 +56,8 @@ if match_any("几∆丨Ӏ🔴п❙"):  # 视觉 = nailong
 | IPA 音标 | /naɪlɔːŋ/、[naɪ˨˩ lʊŋ˧˥] |
 | 日语音读/Romaji | にゅうりゅう、miruku doragon、milk りゅう |
 | 日/韩 | ミルクドラゴン、우유 용、나이롱、밀크 드래곤 |
+| 中文音译 | 米尔克多拉贡、米露可爪公、缪克德拉贡 |
+| 俚语 | breast dragon、boob 龙、drake milk、wyrm 龙、奶子龙 |
 | **跨语言混搭** | **milk 용、Milch 龙、lait ドラゴン、🥛ドラゴン、🅼🅸🅻🅺🐉** |
 | 翻译全覆盖 | Milchdrache(德)、dragon de lait(法)、dragón de leche(西)、drago di latte(意)、dragão de leite(葡)、молочный дракон(俄)、молочний дракон(乌)、melk draak(荷)、mjölkdrake(瑞)、mælkedrage(丹)、mleczny smok(波)、süt ejderhası(土)、naga susu(印尼)、sữa rồng(越)、มังกรนม(泰)、تنين الحليب(阿)、דרקון חלב(希伯来)、दूध ड्रैगन(印地)、δράκος γάλακτος(希) |
 | 缩写/连接符 | NL、MD、n×l、milk→dragon、奶≈龙 |
@@ -101,10 +107,8 @@ def prep(text):
 
 ## 版本
 
+- **v1.10** — 26字母标准替换库(全A-Z) + 中文音译(米尔克/多拉贡) + 俚语全覆盖
+- **v1.9** — 俚语攻击防御 (breast/boob/drake/wyrm/奶子/咪咪)
 - **v1.8** — 边缘攻击防御 (变体选择器/标签字符/隐形分隔/SP标点扩展/x连接)
 - **v1.7** — 终极 Homoglyph 扩展 (+67字符：Coptic/制表符/CJK笔画/彩色圆/球类/太阳)
-- **v1.6** — 火星文防御 (仍孕隆窿宠笼聋 等含乃/龙部件异体同音字)
-- **v1.5** — 重组攻击防御 (龙拆字/NL缩写/连接符/形近字/RTL反转)
-- **v1.4** — 字符混搭强化 + Romaji (miruku/doragon)
-- **v1.3** — 跨语言混搭使用完整 homoglyph 类
 - **v1.0** — 初始发布，69 条正则，19 种外语
