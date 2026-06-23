@@ -59,6 +59,14 @@ MILK_WORDS = [
     _M + '+' + _SP + _I + '+' + _SP + _R + '+' + _SP + _U + '+' + _SP + _K + '+' + _SP + _U + '+',
     # にゅう / にゆう (hiragana: 乳=nyuu)
     r'に[ゅゆ]\s*う',
+    # 俚语 — breast/boob/tit/udder/bosom/jug = 奶
+    r'[bBв][rRяг][eEеë][aAаα@4][sS][tTт]',           # breast
+    r'[bBв][oOо0óÓòÒ]{2,}[bBв]',                       # boob/boobs
+    r'[tTт][iIιі1|]+[tTт]+[yYуýÿ]?',                   # tit/titty
+    r'[uUùÙúÚ][dD∂][dD∂][eEеë][rRяг]',                # udder
+    r'[bBв][oOо0óÓòÒ][sS][oOо0óÓòÒ][mMм]',            # bosom
+    r'[jJ][uUùÙúÚ][gG96]',                               # jug
+    r'[cCс][hHһ][eEеë][sS][tTт]',                       # chest
     # 非拉丁文字
     r'นม',           # 泰语
     r'حليب',         # 阿拉伯语
@@ -111,6 +119,10 @@ DRAGON_WORDS = [
     _D + '+' + _SP + _O + '+' + _SP + _R + '+' + _SP + _A + '+' + _SP + _G + '+' + _SP + _O + '+' + _SP + _N + '+',
     # りゅう / りゆう (hiragana: 龍=ryuu)
     r'り[ゅゆ]\s*う',
+    # 俚语 — drake/wyrm/wyvern = 龙
+    r'[dD∂][rRяг][aAаα@4][kKк][eEеë]',                # drake
+    r'[wW][yYуýÿ][rRяг][mMм]',                          # wyrm
+    r'[wW][yYуýÿ][vV][eEеë][rRяг][nNη]',                # wyvern
     # 非拉丁文字
     r'มังกร',        # 泰语
     r'تنين',         # 阿拉伯语
