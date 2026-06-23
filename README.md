@@ -69,10 +69,17 @@ if match_any("几∆丨Ӏ🔴п❙"):  # 视觉 = nailong
 ## 跨语言混搭
 
 ```
-36 种奶表达 × 28 种龙表达 = 1008 种组合 → 1 条正则
+45 种奶表达 × 39 种龙表达 = 1755 种组合 → 1 条正则 (22KB)
 ```
 
-包括 emoji、负圈字母、方框字母、中文、拼音、火星文、日语音读、19 种外语之间的任意排列组合。
+拼音音节类由 **pypinyin** 自动生成，覆盖所有同音汉字：
+
+| 音节 | 规模 |
+|---|---|
+| milk ≈ mi/mei × er/le/lu/ru × ke/ku/ge | 425×1291×718 ≈ **3.94亿** 同音字排列 |
+| dragon ≈ duo/de/du × la/ra/na × gong/gen | 635×283×310 ≈ **5570万** 同音字排列 |
+
+包括 emoji、负圈字母、方框字母、26 字母 homoglyph 全库、中文、拼音、火星文、日语音读、日式当て字、19 种外语之间的任意排列组合。
 
 ## 预处理
 
@@ -94,9 +101,11 @@ def prep(text):
 
 | 文件 | 用途 |
 |---|---|
-| `patterns_final.txt` | **最终产物** — 79 条纯文本正则，直接可用 |
-| `nailong_patterns.py` | Python 模块版，含终极 homoglyph 字符类 + match_any() |
-| `cross_lang_attack.py` | 跨语言混搭探针 — 37×29=1073 组合 |
+| `patterns_final.txt` | **最终产物** — 79 条纯文本正则 (72KB)，直接可用 |
+| `nailong_patterns.py` | Python 模块版，含 26 字母 homoglyph 全库 + match_any() |
+| `homoglyph_lib.py` | A-Z 标准替换库（每字母一个全 Unicode 视觉黑洞） |
+| `pinyin_class_gen.py` | 拼音音节类生成器（pypinyin 自动，3.94亿+5570万组合） |
+| `cross_lang_attack.py` | 跨语言混搭探针 — 45×39=1755 组合 |
 | `generate_patterns.py` | Pattern 生成器 + 56 条测试用例 |
 | `attack_probe.py` | 攻击探针 — 140+ 种攻击向量 |
 | `recomb_attack.py` | 重组攻击探针 — 拆字/缩写/连接符/RTL |
@@ -107,8 +116,6 @@ def prep(text):
 
 ## 版本
 
-- **v1.10** — 26字母标准替换库(全A-Z) + 中文音译(米尔克/多拉贡) + 俚语全覆盖
-- **v1.9** — 俚语攻击防御 (breast/boob/drake/wyrm/奶子/咪咪)
-- **v1.8** — 边缘攻击防御 (变体选择器/标签字符/隐形分隔/SP标点扩展/x连接)
-- **v1.7** — 终极 Homoglyph 扩展 (+67字符：Coptic/制表符/CJK笔画/彩色圆/球类/太阳)
+- **v1.11** — pypinyin 系统化拼音音节类 (3.94亿+5570万同音字组合自动覆盖)
+- **v1.10** — 26 字母标准替换库(全A-Z) + 中文音译 + 俚语全覆盖
 - **v1.0** — 初始发布，69 条正则，19 种外语
