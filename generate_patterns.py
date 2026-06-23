@@ -156,6 +156,10 @@ PATTERNS += [
     (r'小' + SEP + _NAI + SEP + _LONG, "# 小奶龙"),
 ]
 
+# ---- 13. 跨语言混搭 (any_milk × any_dragon, 850组合→1条正则) ----
+from cross_lang_attack import CROSS_LANG_PATTERN
+PATTERNS.append((CROSS_LANG_PATTERN, "# [跨语言] 任意语言的 '奶/milk' + 任意语言的 '龙/dragon' (850种组合)"))
+
 # =============================================
 # 输出到文件
 # =============================================
