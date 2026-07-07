@@ -199,23 +199,25 @@ class NailongBot:
         # 构建回复 — 直接用 OneBot API URL (与沙雕桥一致)
         if msg_type == "group" and gid:
             action = "send_group_msg"
-            params = {"group_id": gid, "message": self.reply_text}
+            params = {"group_id": int(gid), "message": self.reply_text}
         else:
             action = "send_private_msg"
-            params = {"user_id": uid, "message": self.reply_text}
+            params = {"user_id": int(uid), "message": self.reply_text}
 
         headers = {}
         token = self.cfg.get("access_token", "")
         if token:
             headers["Authorization"] = f"Bearer {token}"
 
+        url = f"{self.http_url}/{action}"
+        logger.debug(f"POST {url} {json.dumps(params, ensure_ascii=False)[:80]}")
         try:
-            async with self.session.post(
-                f"{self.http_url}/{action}", json=params, headers=headers,
-            ) as resp:
+            async with self.session.post(url, json=params, headers=headers) as resp:
                 if resp.status != 200:
                     body = await resp.text()
-                    logger.warning(f"reply failed: {resp.status} {body[:100]}")
+                    logger.warning(f"reply failed: {resp.status} {body[:200]}")
+                else:
+                    logger.info(f"reply ok: {action}")
         except Exception as e:
             logger.error(f"reply error: {e}")
 
