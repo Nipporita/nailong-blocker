@@ -138,6 +138,7 @@ class NailongBot:
         self.http_url = cfg["http_url"]
         self.reply_text = cfg["reply_text"]
         self.session: aiohttp.ClientSession | None = None
+        self._ws = None  # 反向WS连接，用于通过WS回复
 
     async def start(self):
         self.session = aiohttp.ClientSession()
@@ -148,6 +149,7 @@ class NailongBot:
         async def ws_handler(request):
             ws = web.WebSocketResponse(max_msg_size=0)
             await ws.prepare(request)
+            self._ws = ws  # 保存连接用于回复
             peer = request.remote
             logger.info(f"OneBot 已连接: {peer}")
             async for msg in ws:
@@ -158,6 +160,7 @@ class NailongBot:
                         logger.error(f"处理异常: {e}")
                 elif msg.type == aiohttp.WSMsgType.ERROR:
                     logger.error(f"WS error: {ws.exception()}")
+            self._ws = None
             logger.info(f"OneBot 断开: {peer}")
             return ws
 
@@ -196,7 +199,6 @@ class NailongBot:
         where = f"群{gid}" if gid else f"私聊{uid}"
         logger.info(f"检测到奶龙! [{where}] {uid}: {raw[:80]}")
 
-        # 构建回复 — 直接用 OneBot API URL (与沙雕桥一致)
         if msg_type == "group" and gid:
             action = "send_group_msg"
             params = {"group_id": int(gid), "message": self.reply_text}
@@ -204,21 +206,28 @@ class NailongBot:
             action = "send_private_msg"
             params = {"user_id": int(uid), "message": self.reply_text}
 
+        # 优先通过 WS 发送（无需额外 HTTP 端口）
+        if self._ws:
+            try:
+                await self._ws.send_json({"action": action, "params": params})
+                logger.info("reply via WS ok")
+                return
+            except Exception as e:
+                logger.warning(f"WS reply failed, fallback to HTTP: {e}")
+
+        # HTTP fallback
         headers = {"Content-Type": "application/json"}
         token = self.cfg.get("access_token", "")
         if token:
             headers["Authorization"] = f"Bearer {token}"
-
         url = f"{self.http_url}/{action}"
         try:
             async with self.session.post(url, json=params, headers=headers) as resp:
                 body = await resp.json()
                 if body.get("status") != "ok":
-                    logger.warning(f"reply failed: retcode={body.get('retcode')} msg={body.get('msg',str(body))[:100]}")
-                else:
-                    logger.info("reply ok")
+                    logger.warning(f"HTTP reply failed: retcode={body.get('retcode')} msg={str(body)[:100]}")
         except Exception as e:
-            logger.error(f"reply error: {e}")
+            logger.error(f"HTTP reply error: {e}")
 
     async def stop(self):
         if self.session:
