@@ -124,10 +124,36 @@ def check_v2(text: str, mt=0.10, dt=0.08) -> bool:
     return m > mt and d > dt
 
 CQ_CODE_RE = re.compile(r'\[CQ:[^\]]+\]')
-CQ_IMAGE_RE = re.compile(r'\[CQ:image,[^\]]*summary=([^,\]]+)')  # NapCat内置OCR
+CQ_IMAGE_RE = re.compile(r'\[CQ:image,[^\]]*url=([^,\]]+)')
 
-def extract_text(event: dict) -> str:
-    """从 OneBot 事件中提取所有文本（消息文本 + 图片OCR摘要）。"""
+_ocr = None
+
+def _get_ocr():
+    global _ocr
+    if _ocr is None:
+        from paddleocr import PaddleOCR
+        _ocr = PaddleOCR(lang='ch', use_angle_cls=False, show_log=False)
+    return _ocr
+
+async def ocr_image(url: str, session: aiohttp.ClientSession) -> str:
+    """下载图片并用PaddleOCR提取文字"""
+    try:
+        async with session.get(url.replace('&amp;', '&')) as resp:
+            if resp.status != 200:
+                return ''
+            img_data = await resp.read()
+        ocr = _get_ocr()
+        result = ocr.ocr(img_data, cls=False)
+        if not result or not result[0]:
+            return ''
+        texts = [line[1][0] for line in result[0] if line[1][1] > 0.5]
+        return ' '.join(texts)
+    except Exception as e:
+        logger.warning(f"OCR failed: {e}")
+        return ''
+
+async def extract_text(event: dict, session: aiohttp.ClientSession | None = None) -> str:
+    """从 OneBot 事件中提取所有文本（消息文本 + 图片PaddleOCR）。"""
     texts = []
 
     # 1. 纯文本部分（去CQ码）
@@ -136,14 +162,15 @@ def extract_text(event: dict) -> str:
     if plain:
         texts.append(plain)
 
-    # 2. 图片OCR摘要（NapCat内置）
-    for m in CQ_IMAGE_RE.finditer(raw):
-        summary = m.group(1).strip()
-        # HTML解码: &#91; → [
-        summary = summary.replace('&#91;', '[').replace('&#93;', ']')
-        summary = summary.replace('&#44;', ',').replace('&amp;', '&')
-        if summary:
-            texts.append(summary)
+    # 2. 图片 OCR（PaddleOCR）
+    if session:
+        for m in CQ_IMAGE_RE.finditer(raw):
+            url = m.group(1).strip()
+            if url:
+                ocr_text = await ocr_image(url, session)
+                if ocr_text:
+                    texts.append(ocr_text)
+                    logger.info(f"OCR: {ocr_text[:80]}")
 
     return ' '.join(texts)
 
@@ -215,7 +242,7 @@ class NailongBot:
         if event.get("post_type") != "message": return
         msg_type = event.get("message_type", "")
         if msg_type not in ("group", "private"): return
-        text = extract_text(event)
+        text = await extract_text(event, self.session)
         if not text: return
 
         if not is_nailong(text, self.cfg): return
