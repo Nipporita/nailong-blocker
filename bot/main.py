@@ -333,7 +333,7 @@ class NailongBot:
         # 贴表情回复 (NapCat set_msg_emoji_like)
         emoji_id = self.cfg.get("emoji_reaction_id", 0)
         if emoji_id and mid:
-            await self._api("set_msg_emoji_like", {"message_id": int(mid), "emoji_id": emoji_id})
+            await self._api("set_msg_emoji_like", {"message_id": str(mid), "emoji_id": str(emoji_id)})
             logger.info("emoji reaction ok")
 
     async def _api(self, action: str, params: dict):

@@ -4,7 +4,7 @@
   "http_url": "http://localhost:3000",
   "access_token": "",
   "reply_text": "检测到奶龙！",
-  "emoji_reaction_id": 247,
+  "emoji_reaction_id": 128009,
   "enable_semantic": true,
   "semantic_threshold_milk": 0.10,
   "semantic_threshold_dragon": 0.08
