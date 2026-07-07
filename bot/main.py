@@ -331,10 +331,10 @@ class NailongBot:
         logger.info(f"检测到奶龙! [{where}] {uid}: {text[:80]}")
 
         # 贴表情回复 (NapCat set_msg_emoji_like)
-        emoji_id = self.cfg.get("emoji_reaction_id", 0)
-        if emoji_id and mid:
-            await self._api("set_msg_emoji_like", {"message_id": str(mid), "emoji_id": str(emoji_id)})
-            logger.info("emoji reaction ok")
+        for emoji_id in self.cfg.get("emoji_reaction_ids", []):
+             await self._api("set_msg_emoji_like", {"message_id": str(mid), "emoji_id": str(emoji_id)})
+        if self.cfg.get("emoji_reaction_ids"):
+            logger.info("emoji reactions ok")
 
     async def _api(self, action: str, params: dict):
         """通过 WS 或 HTTP 调用 OneBot API"""
