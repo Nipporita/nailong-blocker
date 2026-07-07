@@ -123,7 +123,33 @@ def check_v2(text: str, mt=0.10, dt=0.08) -> bool:
     d = float(np.max(np.dot(_anchors_dragon, emb))) - float(np.max(np.dot(_neg_anchors, emb)))
     return m > mt and d > dt
 
+CQ_CODE_RE = re.compile(r'\[CQ:[^\]]+\]')
+CQ_IMAGE_RE = re.compile(r'\[CQ:image,[^\]]*summary=([^,\]]+)')  # NapCat内置OCR
+
+def extract_text(event: dict) -> str:
+    """从 OneBot 事件中提取所有文本（消息文本 + 图片OCR摘要）。"""
+    texts = []
+
+    # 1. 纯文本部分（去CQ码）
+    raw = event.get("raw_message", "") or event.get("message", "")
+    plain = CQ_CODE_RE.sub('', raw).strip()
+    if plain:
+        texts.append(plain)
+
+    # 2. 图片OCR摘要（NapCat内置）
+    for m in CQ_IMAGE_RE.finditer(raw):
+        summary = m.group(1).strip()
+        # HTML解码: &#91; → [
+        summary = summary.replace('&#91;', '[').replace('&#93;', ']')
+        summary = summary.replace('&#44;', ',').replace('&amp;', '&')
+        if summary:
+            texts.append(summary)
+
+    return ' '.join(texts)
+
 def is_nailong(text: str, cfg: dict) -> bool:
+    if not text.strip():
+        return False
     if check_v1(text): return True
     if cfg.get("enable_semantic", True):
         return check_v2(text, cfg.get("semantic_threshold_milk", 0.10),
@@ -189,15 +215,15 @@ class NailongBot:
         if event.get("post_type") != "message": return
         msg_type = event.get("message_type", "")
         if msg_type not in ("group", "private"): return
-        raw = event.get("raw_message", "") or event.get("message", "")
-        if not raw.strip(): return
+        text = extract_text(event)
+        if not text: return
 
-        if not is_nailong(raw, self.cfg): return
+        if not is_nailong(text, self.cfg): return
 
         uid = event.get("user_id", "?")
         gid = event.get("group_id", "")
         where = f"群{gid}" if gid else f"私聊{uid}"
-        logger.info(f"检测到奶龙! [{where}] {uid}: {raw[:80]}")
+        logger.info(f"检测到奶龙! [{where}] {uid}: {text[:80]}")
 
         if msg_type == "group" and gid:
             action = "send_group_msg"
