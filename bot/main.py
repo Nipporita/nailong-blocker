@@ -174,6 +174,26 @@ async def ocr_image(url: str, session: aiohttp.ClientSession) -> str:
             try: os.unlink(tmp_path)
             except: pass
 
+_VISION_READY = None
+
+def _check_vision(img_path: str) -> bool:
+    """CLIP 视觉检测: 图片是否包含奶龙形象"""
+    global _VISION_READY
+    if _VISION_READY is None:
+        try:
+            from vision.detect import is_nailong_image
+            _VISION_READY = True
+        except Exception as e:
+            logger.info(f"vision disabled: {e}")
+            _VISION_READY = False
+    if not _VISION_READY:
+        return False
+    from vision.detect import is_nailong_image
+    ok, conf = is_nailong_image(img_path)
+    if ok:
+        logger.info(f"vision detected nailong, conf={conf:+.3f}")
+    return ok
+
 async def extract_text(event: dict, session: aiohttp.ClientSession | None = None) -> str:
     """从 OneBot 事件中提取所有文本（消息文本 + 图片PaddleOCR）。"""
     texts = []
@@ -184,7 +204,7 @@ async def extract_text(event: dict, session: aiohttp.ClientSession | None = None
     if plain:
         texts.append(plain)
 
-    # 2. 图片 OCR（PaddleOCR）
+    # 2. 图片 OCR + 视觉检测
     if session:
         for m in CQ_IMAGE_RE.finditer(raw):
             url = m.group(1).strip()
@@ -195,6 +215,33 @@ async def extract_text(event: dict, session: aiohttp.ClientSession | None = None
                     logger.info(f"OCR: {ocr_text[:80]}")
 
     return ' '.join(texts)
+
+async def check_vision(event: dict, session: aiohttp.ClientSession) -> bool:
+    """检查图片消息是否包含奶龙形象 (CLIP视觉)"""
+    raw = event.get("raw_message", "") or event.get("message", "")
+    for m in CQ_IMAGE_RE.finditer(raw):
+        url = m.group(1).strip()
+        if not url:
+            continue
+        import tempfile, os
+        tmp_path = None
+        try:
+            async with session.get(url.replace('&amp;', '&')) as resp:
+                if resp.status != 200:
+                    continue
+                data = await resp.read()
+            with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as f:
+                f.write(data)
+                tmp_path = f.name
+            if _check_vision(tmp_path):
+                return True
+        except Exception as e:
+            logger.warning(f"vision check failed: {e}")
+        finally:
+            if tmp_path:
+                try: os.unlink(tmp_path)
+                except: pass
+    return False
 
 def is_nailong(text: str, cfg: dict) -> bool:
     if not text.strip():
@@ -265,6 +312,14 @@ class NailongBot:
         msg_type = event.get("message_type", "")
         if msg_type not in ("group", "private"): return
         text = await extract_text(event, self.session)
+
+        # 视觉检测：图片中的奶龙形象
+        if await check_vision(event, self.session):
+            if not text:
+                text = "[视觉检测: 奶龙形象]"
+            else:
+                text = text + " [视觉检测: 奶龙形象]"
+
         if not text: return
 
         if not is_nailong(text, self.cfg): return
