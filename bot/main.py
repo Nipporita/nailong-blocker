@@ -132,7 +132,7 @@ def _get_ocr():
     global _ocr
     if _ocr is None:
         from paddleocr import PaddleOCR
-        _ocr = PaddleOCR(lang='ch', use_angle_cls=False, show_log=False)
+        _ocr = PaddleOCR(lang='ch', use_textline_orientation=False)
     return _ocr
 
 async def ocr_image(url: str, session: aiohttp.ClientSession) -> str:
