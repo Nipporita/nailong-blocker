@@ -204,20 +204,19 @@ class NailongBot:
             action = "send_private_msg"
             params = {"user_id": int(uid), "message": self.reply_text}
 
-        headers = {}
+        headers = {"Content-Type": "application/json"}
         token = self.cfg.get("access_token", "")
         if token:
             headers["Authorization"] = f"Bearer {token}"
 
         url = f"{self.http_url}/{action}"
-        logger.debug(f"POST {url} {json.dumps(params, ensure_ascii=False)[:80]}")
         try:
             async with self.session.post(url, json=params, headers=headers) as resp:
-                if resp.status != 200:
-                    body = await resp.text()
-                    logger.warning(f"reply failed: {resp.status} {body[:200]}")
+                body = await resp.json()
+                if body.get("status") != "ok":
+                    logger.warning(f"reply failed: retcode={body.get('retcode')} msg={body.get('msg',str(body))[:100]}")
                 else:
-                    logger.info(f"reply ok: {action}")
+                    logger.info("reply ok")
         except Exception as e:
             logger.error(f"reply error: {e}")
 
