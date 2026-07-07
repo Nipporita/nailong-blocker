@@ -36,6 +36,7 @@ DEFAULT_CONFIG = {
     "listen_host": "0.0.0.0",
     "listen_port": 3001,
     "http_url": "http://localhost:3000",
+    "access_token": "",
     "reply_text": "检测到奶龙！",
     "enable_semantic": True,
     "semantic_threshold_milk": 0.10,
@@ -195,23 +196,26 @@ class NailongBot:
         where = f"群{gid}" if gid else f"私聊{uid}"
         logger.info(f"检测到奶龙! [{where}] {uid}: {raw[:80]}")
 
-        # 构建回复
-        params = {
-            "message_type": msg_type,
-            "message": self.reply_text,
-        }
+        # 构建回复 — 直接用 OneBot API URL (与沙雕桥一致)
         if msg_type == "group" and gid:
-            params["group_id"] = gid
+            action = "send_group_msg"
+            params = {"group_id": gid, "message": self.reply_text}
         else:
-            params["user_id"] = uid
+            action = "send_private_msg"
+            params = {"user_id": uid, "message": self.reply_text}
+
+        headers = {}
+        token = self.cfg.get("access_token", "")
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
 
         try:
             async with self.session.post(
-                f"{self.http_url}/send_msg",
-                json={"action": "send_msg", "params": params},
+                f"{self.http_url}/{action}", json=params, headers=headers,
             ) as resp:
                 if resp.status != 200:
-                    logger.warning(f"reply failed: {resp.status}")
+                    body = await resp.text()
+                    logger.warning(f"reply failed: {resp.status} {body[:100]}")
         except Exception as e:
             logger.error(f"reply error: {e}")
 
