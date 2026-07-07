@@ -330,38 +330,30 @@ class NailongBot:
         where = f"群{gid}" if gid else f"私聊{uid}"
         logger.info(f"检测到奶龙! [{where}] {uid}: {text[:80]}")
 
-        # 引用原消息回复: [CQ:reply,id=<message_id>]
-        reply_msg = f"[CQ:reply,id={mid}]{self.reply_text}"
+        # 贴表情回复 (NapCat set_msg_emoji_like)
+        emoji_id = self.cfg.get("emoji_reaction_id", 0)
+        if emoji_id and mid:
+            await self._api("set_msg_emoji_like", {"message_id": int(mid), "emoji_id": emoji_id})
+            logger.info("emoji reaction ok")
 
-        if msg_type == "group" and gid:
-            action = "send_group_msg"
-            params = {"group_id": int(gid), "message": reply_msg}
-        else:
-            action = "send_private_msg"
-            params = {"user_id": int(uid), "message": reply_msg}
-
-        # 优先通过 WS 发送（无需额外 HTTP 端口）
+    async def _api(self, action: str, params: dict):
+        """通过 WS 或 HTTP 调用 OneBot API"""
+        # 优先 WS
         if self._ws:
             try:
                 await self._ws.send_json({"action": action, "params": params})
-                logger.info("reply via WS ok")
                 return
-            except Exception as e:
-                logger.warning(f"WS reply failed, fallback to HTTP: {e}")
-
+            except Exception:
+                pass
         # HTTP fallback
         headers = {"Content-Type": "application/json"}
         token = self.cfg.get("access_token", "")
         if token:
             headers["Authorization"] = f"Bearer {token}"
-        url = f"{self.http_url}/{action}"
-        try:
-            async with self.session.post(url, json=params, headers=headers) as resp:
-                body = await resp.json()
-                if body.get("status") != "ok":
-                    logger.warning(f"HTTP reply failed: retcode={body.get('retcode')} msg={str(body)[:100]}")
-        except Exception as e:
-            logger.error(f"HTTP reply error: {e}")
+        async with self.session.post(
+            f"{self.http_url}/{action}", json=params, headers=headers
+        ) as resp:
+            pass  # fire-and-forget
 
     async def stop(self):
         if self.session:
