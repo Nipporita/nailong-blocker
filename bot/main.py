@@ -131,6 +131,10 @@ _ocr = None
 def _get_ocr():
     global _ocr
     if _ocr is None:
+        import os
+        # 模型存到项目目录而非 C 盘
+        os.environ.setdefault('PADDLE_PDX_MODEL_HOME',
+                              str(Path(__file__).parent.parent / '.paddleocr_models'))
         from paddleocr import PaddleOCR
         _ocr = PaddleOCR(lang='ch', use_textline_orientation=False)
     return _ocr

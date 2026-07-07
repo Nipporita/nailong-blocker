@@ -17,8 +17,9 @@ from nailong_patterns import _B, _C, _E, _F, _H, _J, _P, _Q, _S, _T, _V, _W, _X,
 # 拉丁字母使用完整 homoglyph 类 (_M/_I/_L/_K 等)，非拉丁使用字面量
 
 MILK_WORDS = [
-    # 中文
-    r'奶', r'乳', r'乳汁', r'乳液', r'酪', r'奶牛', r'牛乳', r'鲜奶',
+    # 中文 (含 pypinyin 自动生成的 nai 同音字类)
+    r'[奶妳乃廼迺仍扔艿𠮨孕奈柰萘錼褦]',
+    r'乳', r'乳汁', r'乳液', r'酪', r'奶牛', r'牛乳', r'鲜奶',
     # 英文 milk / milky (使用完整类: 🅜🅘🅛🅚 等全部覆盖)
     _M + '+' + _SP + _I + '+' + _SP + _L + '+' + _SP + _K + '+',
     _M + '+' + _SP + _I + '+' + _SP + _L + '+' + _SP + _K + r'+[yYiIeE]+',
@@ -108,8 +109,8 @@ MILK_WORDS = [
 # ============ 龙/dragon 词表 ============
 
 DRAGON_WORDS = [
-    # 中文
-    r'[龙龍竜龒陇拢珑⻰]',
+    # 中文 (含 pypinyin 自动生成的 long 同音字类)
+    r'[龙龍竜龒陇拢珑咙宠笼垄聋隆窿庞龚⻰泷嚨壟寵巄弄曨朧栊櫳瀧爖瓏癃眬砻礱籠聾茏蘢蠪蠬鏧鑨隴靇驡鸗龐龓]',
     # 英文 dragon (完整类: 🅓🅡🅐🅖🅞🅝 全部覆盖)
     _D + '+' + _SP + _R + '+' + _SP + _A + '+' + _SP + _G + '+' + _SP + _O + '+' + _SP + _N + '+',
     # loong / long (完整类: 🅛🅞🅝🅖 / 🅛🅞🅞🅝🅖 全部覆盖)
@@ -202,7 +203,15 @@ DRAGON_WORDS = [
 MILK = '(?:' + '|'.join(MILK_WORDS) + ')'
 DRAGON = '(?:' + '|'.join(DRAGON_WORDS) + ')'
 
-CROSS_LANG_PATTERN = MILK + _SP + DRAGON
+# 双向: milk+dragon 和 dragon+milk 都拦截
+CROSS_LANG_PATTERN = f"(?:{MILK}{_SP}{DRAGON}|{DRAGON}{_SP}{MILK})"
+# 日/韩专门倒序 (doragonmiruku / yong-uyu 等已在词表中, 这里补连接写法)
+DRAGON_MILK_EXTRA = (
+    r'ドラゴン\s*ミルク|ミルク\s*ドラゴン'
+    r'|용\s*우유|우유\s*용'
+    r'|드래곤\s*밀크|밀크\s*드래곤'
+)
+CROSS_LANG_PATTERN = f"(?:{CROSS_LANG_PATTERN}|{DRAGON_MILK_EXTRA})"
 
 print(f"MILK words:   {len(MILK_WORDS)}")
 print(f"DRAGON words: {len(DRAGON_WORDS)}")
