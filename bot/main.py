@@ -147,7 +147,7 @@ async def ocr_image(url: str, session: aiohttp.ClientSession) -> str:
                 return ''
             img_data = await resp.read()
         ocr = _get_ocr()
-        result = ocr.ocr(img_data, cls=False)
+        result = ocr.ocr(img_data)
         if not result or not result[0]:
             return ''
         texts = [line[1][0] for line in result[0] if line[1][1] > 0.5]
