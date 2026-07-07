@@ -2,317 +2,232 @@
 """
 奶龙屏蔽器 QQ Bot
 ==================
-基于 OneBot v11 协议的奶龙检测机器人。
+基于 OneBot v11 反向 WebSocket 协议的奶龙检测机器人。
 
-收到消息 → v1 正则快速检测 → 命中则回复"检测到奶龙！"
-         → 未命中 → v2 语义检测 → 命中则回复"检测到奶龙！(语义)"
+Bot 启动 WebSocket 服务器，等待 OneBot（NapCat/LLOneBot）主动连接。
+OneBot 中设置反向 WS 地址为 ws://localhost:3001
 
 启动: python bot/main.py
-依赖: aiohttp, 以及项目根目录的 nailong_patterns, cross_lang_attack, v2_semantic
 """
 from __future__ import annotations
 
 import asyncio
 import json
 import logging
-import signal
 import sys
 import unicodedata
 import re
 from pathlib import Path
 
-# 将项目根目录加入 Python 路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import aiohttp
+from aiohttp import web
 
-# ── 日志 ──────────────────────────────────────────────────────────────
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
-logger = logging.getLogger("奶龙检测")
+logger = logging.getLogger("nailong")
 
-
-# ── OneBot 连接配置 ───────────────────────────────────────────────────
 CONFIG_PATH = Path(__file__).parent / "config.json"
 DEFAULT_CONFIG = {
-    "ws_url": "ws://localhost:3001",       # WebSocket 事件推送
-    "http_url": "http://localhost:3000",    # HTTP API
+    "listen_host": "0.0.0.0",
+    "listen_port": 3001,
+    "http_url": "http://localhost:3000",
     "reply_text": "检测到奶龙！",
-    "enable_semantic": True,               # 是否启用 v2 语义检测
+    "enable_semantic": True,
     "semantic_threshold_milk": 0.10,
     "semantic_threshold_dragon": 0.08,
-    "verbose": False,
 }
 
 def load_config():
     if CONFIG_PATH.exists():
-        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-            cfg = {**DEFAULT_CONFIG, **json.load(f)}
+        cfg = {**DEFAULT_CONFIG, **json.loads(CONFIG_PATH.read_text(encoding="utf-8"))}
     else:
         cfg = DEFAULT_CONFIG
-        with open(CONFIG_PATH, "w", encoding="utf-8") as f:
-            json.dump(cfg, f, indent=2, ensure_ascii=False)
+        CONFIG_PATH.write_text(json.dumps(cfg, indent=2, ensure_ascii=False), encoding="utf-8")
     return cfg
 
+# ─── 奶龙检测核心 ─────────────────────────────────────────────────────
 
-# ═══════════════════════════════════════════════════════════════════════
-# 奶龙检测核心
-# ═══════════════════════════════════════════════════════════════════════
-
-NAILONG_PATTERNS = None
-CROSS_LANG = None
-SEMANTIC_MODEL = None
-ANCHORS_MILK = None
-ANCHORS_DRAGON = None
-NEG_ANCHORS = None
-
+_v1_loaded = False
+_v2_loaded = False
+_naillong_compiled = []
+_cross_lang = None
+_semantic_model = None
+_anchors_milk = None
+_anchors_dragon = None
+_neg_anchors = None
 
 def _load_v1():
-    global NAILONG_PATTERNS, CROSS_LANG
-    if NAILONG_PATTERNS is None:
-        from nailong_patterns import PATTERNS
-        from cross_lang_attack import CROSS_LANG_PATTERN
-        NAILONG_PATTERNS = [(re.compile(p, re.IGNORECASE)) for p in PATTERNS]
-        CROSS_LANG = re.compile(CROSS_LANG_PATTERN, re.IGNORECASE)
-        logger.info(f"v1 正则加载完成: {len(NAILONG_PATTERNS)} 条 pattern")
-
+    global _v1_loaded, _naillong_compiled, _cross_lang
+    if _v1_loaded: return
+    from nailong_patterns import PATTERNS
+    from cross_lang_attack import CROSS_LANG_PATTERN
+    _naillong_compiled = [re.compile(p, re.IGNORECASE) for p in PATTERNS]
+    _cross_lang = re.compile(CROSS_LANG_PATTERN, re.IGNORECASE)
+    _v1_loaded = True
+    logger.info(f"v1 OK: {len(_naillong_compiled)} patterns")
 
 def _load_v2():
-    global SEMANTIC_MODEL, ANCHORS_MILK, ANCHORS_DRAGON, NEG_ANCHORS
-    if SEMANTIC_MODEL is None:
-        import numpy as np
-        from model2vec import StaticModel
-
-        logger.info("加载 v2 语义模型...")
-        SEMANTIC_MODEL = StaticModel.from_pretrained("jarbas/m2v-256-bge-large-zh-v1.5")
-
-        CONCEPT_MILK = [
-            "奶", "乳", "乳汁", "牛奶", "牛乳", "鲜奶",
-            "哺乳动物的分泌物", "哺乳动物喂养后代的液体",
-            "乳腺分泌物", "婴儿的食物",
-            "母牛产的白色液体", "milk", "dairy", "breast milk", "udder secretion",
-        ]
-        CONCEPT_DRAGON = [
-            "龙", "龍", "蛟龙", "神龙",
-            "东方神话中的图腾", "中国传统文化中的神兽",
-            "鳞甲类神话生物", "呼风唤雨的神话动物",
-            "长翅膀的爬行动物", "十二生肖中虚构的那个",
-            "春节舞的龙", "皇帝象征的神兽",
-            "dragon", "loong", "mythical reptile", "wyrm", "drake",
-        ]
-        NEGATIVE_CONCEPTS = [
-            "今天天气真好", "我喜欢喝咖啡", "你好吗",
-            "吃饭了吗", "日常聊天", "普通弹幕", "天气不错",
-            "milk tea", "dragon fruit", "龙年大吉", "奶茶", "牛肉面",
-        ]
-
-        ANCHORS_MILK = np.array(SEMANTIC_MODEL.encode(CONCEPT_MILK))
-        ANCHORS_DRAGON = np.array(SEMANTIC_MODEL.encode(CONCEPT_DRAGON))
-        NEG_ANCHORS = np.array(SEMANTIC_MODEL.encode(NEGATIVE_CONCEPTS))
-        logger.info(f"v2 语义模型加载完成: dim={SEMANTIC_MODEL.dim}")
-
+    global _v2_loaded, _semantic_model, _anchors_milk, _anchors_dragon, _neg_anchors
+    if _v2_loaded: return
+    import numpy as np
+    from model2vec import StaticModel
+    logger.info("loading v2 model...")
+    _semantic_model = StaticModel.from_pretrained("jarbas/m2v-256-bge-large-zh-v1.5")
+    _anchors_milk = np.array(_semantic_model.encode([
+        "奶","乳","乳汁","牛奶","牛乳","鲜奶",
+        "哺乳动物的分泌物","乳腺分泌物","母牛产的白色液体",
+        "milk","dairy","breast milk","udder secretion",
+    ]))
+    _anchors_dragon = np.array(_semantic_model.encode([
+        "龙","龍","蛟龙","神龙","东方神话中的图腾",
+        "鳞甲类神话生物","呼风唤雨的神话动物","春节舞的龙",
+        "dragon","loong","mythical reptile","wyrm","drake",
+    ]))
+    _neg_anchors = np.array(_semantic_model.encode([
+        "今天天气真好","你好吗","吃饭了吗","日常聊天","普通弹幕",
+        "milk tea","dragon fruit","龙年大吉","奶茶","牛肉面",
+    ]))
+    _v2_loaded = True
+    logger.info(f"v2 OK: dim={_semantic_model.dim}")
 
 def prep(text: str) -> str:
-    """预处理: NFKC + 去零宽/RTL/变体选择器/组合符号"""
     text = unicodedata.normalize("NFKC", text)
     text = re.sub(r'[​-‏⁠-⁯﻿­᠎]', '', text)
-    has_rtl = bool(re.search(r'[‪-‮]', text))
-    text = re.sub(r'[‪-‮]', '', text)
-    if has_rtl:
-        text = text[::-1]
+    if re.search(r'[‪-‮]', text):
+        text = re.sub(r'[‪-‮]', '', text)[::-1]
+    else:
+        text = re.sub(r'[‪-‮]', '', text)
     text = re.sub(r'[︀-️]', '', text)
     text = ''.join(c for c in text if not (0xE0000 <= ord(c) <= 0xE007F))
     text = re.sub(r'[⃐-⃿]', '', text)
     return text
 
-
 def check_v1(text: str) -> bool:
-    """v1 正则快速路径"""
     _load_v1()
     t = prep(text)
-    for p in NAILONG_PATTERNS:
-        if p.search(t):
-            return True
-    return bool(CROSS_LANG.search(t))
+    for p in _naillong_compiled:
+        if p.search(t): return True
+    return bool(_cross_lang.search(t))
 
-
-def check_v2(text: str, milk_t: float = 0.10, dragon_t: float = 0.08) -> bool:
-    """v2 语义慢速路径"""
+def check_v2(text: str, mt=0.10, dt=0.08) -> bool:
     import numpy as np
     _load_v2()
-    t = prep(text)
-    emb = SEMANTIC_MODEL.encode([t])[0]
+    emb = _semantic_model.encode([prep(text)])[0]
+    m = float(np.max(np.dot(_anchors_milk, emb))) - float(np.max(np.dot(_neg_anchors, emb)))
+    d = float(np.max(np.dot(_anchors_dragon, emb))) - float(np.max(np.dot(_neg_anchors, emb)))
+    return m > mt and d > dt
 
-    milk_pos = float(np.max(np.dot(ANCHORS_MILK, emb)))
-    dragon_pos = float(np.max(np.dot(ANCHORS_DRAGON, emb)))
-    neg = float(np.max(np.dot(NEG_ANCHORS, emb)))
-
-    milk_diff = milk_pos - neg
-    dragon_diff = dragon_pos - neg
-
-    return milk_diff > milk_t and dragon_diff > dragon_t
-
-
-def is_nailong(text: str, config: dict) -> bool:
-    """联合检测: v1 快速 → v2 语义"""
-    # v1 正则
-    if check_v1(text):
-        return True
-
-    # v2 语义 (可配置关闭)
-    if config.get("enable_semantic", True):
-        return check_v2(
-            text,
-            milk_t=config.get("semantic_threshold_milk", 0.10),
-            dragon_t=config.get("semantic_threshold_dragon", 0.08),
-        )
-
+def is_nailong(text: str, cfg: dict) -> bool:
+    if check_v1(text): return True
+    if cfg.get("enable_semantic", True):
+        return check_v2(text, cfg.get("semantic_threshold_milk", 0.10),
+                        cfg.get("semantic_threshold_dragon", 0.08))
     return False
 
-
-# ═══════════════════════════════════════════════════════════════════════
-# QQ Bot 主体
-# ═══════════════════════════════════════════════════════════════════════
+# ─── WebSocket 服务器 ──────────────────────────────────────────────────
 
 class NailongBot:
-    def __init__(self, config: dict):
-        self.config = config
-        self.ws_url = config["ws_url"]
-        self.http_url = config["http_url"]
-        self.reply_text = config["reply_text"]
+    def __init__(self, cfg: dict):
+        self.cfg = cfg
+        self.http_url = cfg["http_url"]
+        self.reply_text = cfg["reply_text"]
         self.session: aiohttp.ClientSession | None = None
-        self._running = False
 
     async def start(self):
         self.session = aiohttp.ClientSession()
-        self._running = True
-        logger.info(f"连接 WebSocket: {self.ws_url}")
+        host = self.cfg["listen_host"]
+        port = self.cfg["listen_port"]
 
-        retry_delay = 1
-        while self._running:
-            try:
-                async with self.session.ws_connect(
-                    self.ws_url,
-                    max_msg_size=0,
-                ) as ws:
-                    retry_delay = 1
-                    logger.info("WebSocket 已连接")
-                    async for msg in ws:
-                        if not self._running:
-                            break
-                        if msg.type == aiohttp.WSMsgType.TEXT:
-                            try:
-                                await self._handle_message(json.loads(msg.data))
-                            except Exception as e:
-                                logger.error(f"处理消息异常: {e}")
-                        elif msg.type == aiohttp.WSMsgType.ERROR:
-                            logger.error(f"WebSocket 错误: {ws.exception()}")
-            except aiohttp.ClientError as e:
-                logger.warning(f"连接断开, {retry_delay}s 后重连: {e}")
-            except asyncio.CancelledError:
-                break
-            except Exception as e:
-                logger.error(f"未预期的错误: {e}")
+        # 创建 WS 路由：OneBot 反向连接时触发
+        async def ws_handler(request):
+            ws = web.WebSocketResponse(max_msg_size=0)
+            await ws.prepare(request)
+            peer = request.remote
+            logger.info(f"OneBot 已连接: {peer}")
+            async for msg in ws:
+                if msg.type == aiohttp.WSMsgType.TEXT:
+                    try:
+                        await self._handle(json.loads(msg.data))
+                    except Exception as e:
+                        logger.error(f"处理异常: {e}")
+                elif msg.type == aiohttp.WSMsgType.ERROR:
+                    logger.error(f"WS error: {ws.exception()}")
+            logger.info(f"OneBot 断开: {peer}")
+            return ws
 
-            if self._running:
-                await asyncio.sleep(retry_delay)
-                retry_delay = min(retry_delay * 2, 60)
+        app = web.Application()
+        app.router.add_get("/", ws_handler)
+        app.router.add_get("/ws", ws_handler)
+        app.router.add_get("/ws/", ws_handler)
 
-    async def _handle_message(self, event: dict):
-        """处理 OneBot v11 事件"""
-        post_type = event.get("post_type", "")
-        if post_type != "message":
-            return
+        runner = web.AppRunner(app)
+        await runner.setup()
+        site = web.TCPSite(runner, host, port)
+        await site.start()
+        logger.info(f"WS 服务器已启动: ws://{host}:{port}")
+        logger.info("等待 OneBot 反向连接...")
 
-        message_type = event.get("message_type", "")
-        if message_type not in ("group", "private"):
-            return
+        # 保持运行
+        try:
+            while True:
+                await asyncio.sleep(3600)
+        except asyncio.CancelledError:
+            pass
+        finally:
+            await runner.cleanup()
 
+    async def _handle(self, event: dict):
+        if event.get("post_type") != "message": return
+        msg_type = event.get("message_type", "")
+        if msg_type not in ("group", "private"): return
         raw = event.get("raw_message", "") or event.get("message", "")
-        if not raw.strip():
-            return
+        if not raw.strip(): return
 
-        user_id = event.get("user_id", "?")
-        group_id = event.get("group_id", "")
-        message_id = event.get("message_id", 0)
+        if not is_nailong(raw, self.cfg): return
 
-        # 检测
-        if not is_nailong(raw, self.config):
-            return
+        uid = event.get("user_id", "?")
+        gid = event.get("group_id", "")
+        where = f"群{gid}" if gid else f"私聊{uid}"
+        logger.info(f"检测到奶龙! [{where}] {uid}: {raw[:80]}")
 
-        # 命中！记录 & 回复
-        where = f"群{group_id}" if group_id else f"私聊{user_id}"
-        logger.info(f"检测到奶龙! [{where}] {user_id}: {raw[:80]}")
-
-        await self._reply(event)
-
-    async def _reply(self, event: dict):
-        """发送回复消息"""
-        message_type = event.get("message_type", "group")
-        group_id = event.get("group_id", "")
-        user_id = event.get("user_id", 0)
-
-        # 构建回复消息
-        reply_msg = {
-            "action": "send_msg",
-            "params": {
-                "message_type": message_type,
-                "message": self.reply_text,
-            },
+        # 构建回复
+        params = {
+            "message_type": msg_type,
+            "message": self.reply_text,
         }
-        if message_type == "group" and group_id:
-            reply_msg["params"]["group_id"] = group_id
-        elif message_type == "private":
-            reply_msg["params"]["user_id"] = user_id
+        if msg_type == "group" and gid:
+            params["group_id"] = gid
+        else:
+            params["user_id"] = uid
 
         try:
             async with self.session.post(
                 f"{self.http_url}/send_msg",
-                json=reply_msg,
+                json={"action": "send_msg", "params": params},
             ) as resp:
                 if resp.status != 200:
-                    logger.warning(f"回复失败: {resp.status}")
+                    logger.warning(f"reply failed: {resp.status}")
         except Exception as e:
-            logger.error(f"发送回复异常: {e}")
+            logger.error(f"reply error: {e}")
 
     async def stop(self):
-        self._running = False
         if self.session:
             await self.session.close()
-            self.session = None
-        logger.info("Bot 已停止")
-
-
-# ── 入口 ──────────────────────────────────────────────────────────────
 
 async def main():
-    config = load_config()
-    bot = NailongBot(config)
-
-    loop = asyncio.get_event_loop()
-
-    def shutdown():
-        logger.info("收到停止信号...")
-        bot._running = False
-        for task in asyncio.all_tasks(loop):
-            task.cancel()
-
-    for sig in (signal.SIGINT, signal.SIGTERM):
-        try:
-            loop.add_signal_handler(sig, shutdown)
-        except NotImplementedError:
-            pass  # Windows 不支持 add_signal_handler
-
+    cfg = load_config()
+    bot = NailongBot(cfg)
     try:
         await bot.start()
-    except asyncio.CancelledError:
-        pass
+    except KeyboardInterrupt:
+        logger.info("interrupted")
     finally:
         await bot.stop()
-
 
 if __name__ == "__main__":
     asyncio.run(main())
