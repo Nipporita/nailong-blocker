@@ -141,13 +141,20 @@ def _get_ocr():
 
 async def ocr_image(url: str, session: aiohttp.ClientSession) -> str:
     """下载图片并用PaddleOCR提取文字"""
+    import tempfile
     try:
         async with session.get(url.replace('&amp;', '&')) as resp:
             if resp.status != 200:
                 return ''
             img_data = await resp.read()
+        # 写入临时文件（PaddleOCR需要文件路径或numpy数组）
+        with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as f:
+            f.write(img_data)
+            tmp_path = f.name
         ocr = _get_ocr()
-        result = ocr.ocr(img_data)
+        result = ocr.predict(tmp_path)
+        import os
+        os.unlink(tmp_path)
         if not result or not result[0]:
             return ''
         texts = [line[1][0] for line in result[0] if line[1][1] > 0.5]
