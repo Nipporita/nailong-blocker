@@ -26,8 +26,8 @@ from aiohttp import web
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
+    format="%(asctime)s [%(levelname)-5s] %(name)s: %(message)s",
+    datefmt="%m-%d %H:%M:%S",
 )
 logger = logging.getLogger("nailong")
 
@@ -132,36 +132,47 @@ def _get_ocr():
     global _ocr
     if _ocr is None:
         import os
-        # 模型存到项目目录而非 C 盘
+        # 模型存到项目目录
         os.environ.setdefault('PADDLE_PDX_MODEL_HOME',
                               str(Path(__file__).parent.parent / '.paddleocr_models'))
+        import warnings
+        warnings.filterwarnings('ignore', message='.*ccache.*')
         from paddleocr import PaddleOCR
-        _ocr = PaddleOCR(lang='ch', use_textline_orientation=False)
+        _ocr = PaddleOCR(lang='ch', use_textline_orientation=False, enable_mkldnn=False)
     return _ocr
 
 async def ocr_image(url: str, session: aiohttp.ClientSession) -> str:
     """下载图片并用PaddleOCR提取文字"""
-    import tempfile
+    import tempfile, os
+    tmp_path = None
     try:
         async with session.get(url.replace('&amp;', '&')) as resp:
             if resp.status != 200:
                 return ''
             img_data = await resp.read()
-        # 写入临时文件（PaddleOCR需要文件路径或numpy数组）
         with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as f:
             f.write(img_data)
             tmp_path = f.name
         ocr = _get_ocr()
         result = ocr.predict(tmp_path)
-        import os
-        os.unlink(tmp_path)
-        if not result or not result[0]:
+        if not result:
             return ''
-        texts = [line[1][0] for line in result[0] if line[1][1] > 0.5]
+        # PaddleOCR predict返回 [{'rec_texts': [...], 'rec_scores': [...], ...}]
+        texts = []
+        for page in result:
+            rec_texts = page.get('rec_texts', [])
+            rec_scores = page.get('rec_scores', [])
+            for t, s in zip(rec_texts, rec_scores):
+                if s > 0.5:
+                    texts.append(t)
         return ' '.join(texts)
     except Exception as e:
         logger.warning(f"OCR failed: {e}")
         return ''
+    finally:
+        if tmp_path:
+            try: os.unlink(tmp_path)
+            except: pass
 
 async def extract_text(event: dict, session: aiohttp.ClientSession | None = None) -> str:
     """从 OneBot 事件中提取所有文本（消息文本 + 图片PaddleOCR）。"""
