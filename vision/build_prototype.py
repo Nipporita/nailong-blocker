@@ -37,14 +37,14 @@ def load_model():
 def encode_images(model, preprocess, image_dir: Path) -> np.ndarray:
     """编码目录下所有图片 → N×512 向量"""
     embeddings = []
-    for ext in ("*.png", "*.jpg", "*.jpeg", "*.gif", "*.webp"):
+    for ext in ("*.png", "*.jpg", "*.jpeg", "*.gif", "*.webp", "*.avif"):
         for path in sorted(image_dir.glob(ext)):
             try:
                 img = Image.open(path).convert("RGB")
                 img_tensor = preprocess(img).unsqueeze(0)
                 emb = model.encode_image(img_tensor)
                 emb = emb / emb.norm(dim=-1, keepdim=True)  # L2归一化
-                embeddings.append(emb.squeeze(0).numpy())
+                embeddings.append(emb.squeeze(0).detach().numpy())
                 print(f"  OK: {path.name}")
             except Exception as e:
                 print(f"  SKIP: {path.name} ({e})")
@@ -71,7 +71,7 @@ def build_text_prototypes(model, tokenizer):
     neg_emb = model.encode_text(neg_tokens)
     pos_emb = pos_emb / pos_emb.norm(dim=-1, keepdim=True)
     neg_emb = neg_emb / neg_emb.norm(dim=-1, keepdim=True)
-    return pos_emb.numpy(), neg_emb.numpy()
+    return pos_emb.detach().numpy(), neg_emb.detach().numpy()
 
 
 def main():

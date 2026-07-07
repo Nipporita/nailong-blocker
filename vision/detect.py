@@ -29,11 +29,12 @@ def _load():
 
 def encode_image(img_path: str) -> np.ndarray:
     _load()
+    from pillow_avif import AvifImagePlugin  # noqa: 注册avif
     img = Image.open(img_path).convert("RGB")
     tensor = _preprocess(img).unsqueeze(0)
     emb = _model.encode_image(tensor)
     emb = emb / emb.norm(dim=-1, keepdim=True)
-    return emb.squeeze(0).numpy()
+    return emb.squeeze(0).detach().numpy()
 
 
 def is_nailong_image(img_path: str) -> tuple[bool, float]:
@@ -58,4 +59,4 @@ def is_nailong_image(img_path: str) -> tuple[bool, float]:
         if diff > best_diff:
             best_diff = diff
 
-    return best_diff > 0.15, round(best_diff, 3)
+    return best_diff > 0.0, round(best_diff, 3)
