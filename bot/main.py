@@ -249,15 +249,19 @@ class NailongBot:
 
         uid = event.get("user_id", "?")
         gid = event.get("group_id", "")
+        mid = event.get("message_id", 0)
         where = f"群{gid}" if gid else f"私聊{uid}"
         logger.info(f"检测到奶龙! [{where}] {uid}: {text[:80]}")
 
+        # 引用原消息回复: [CQ:reply,id=<message_id>]
+        reply_msg = f"[CQ:reply,id={mid}]{self.reply_text}"
+
         if msg_type == "group" and gid:
             action = "send_group_msg"
-            params = {"group_id": int(gid), "message": self.reply_text}
+            params = {"group_id": int(gid), "message": reply_msg}
         else:
             action = "send_private_msg"
-            params = {"user_id": int(uid), "message": self.reply_text}
+            params = {"user_id": int(uid), "message": reply_msg}
 
         # 优先通过 WS 发送（无需额外 HTTP 端口）
         if self._ws:
